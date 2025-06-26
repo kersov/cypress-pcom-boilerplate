@@ -1,0 +1,25 @@
+{
+  "name": "cypress-pcom-boilerplate",
+  "version": "0.0.1",
+  "description": "A foundational Cypress boilerplate project utilizing the Page Component Object Model (PCOM) for scalable, maintainable end-to-end testing. Supports cross-environment, cross-device, multi-language testing, and test tagging.",
+  "keywords": [
+    "cypress",
+    "PCOM",
+    "e2e"
+  ],
+  "homepage": "https://github.com/kersov/cypress-pcom-boilerplate#readme",
+  "bugs": {
+    "url": "https://github.com/kersov/cypress-pcom-boilerplate/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kersov/cypress-pcom-boilerplate.git"
+  },
+  "license": "MIT",
+  "author": "Oleksii Kersov",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

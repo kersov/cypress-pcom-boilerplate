@@ -27,26 +27,6 @@ class TypeableComponent extends InteractiveComponent {
     /** ASSERTION METHODS */
 
     /**
-     * Asserts that the component has a specific value.
-     * @param {string} value - The expected value to check for.
-     * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
-     */
-    shouldHaveValue(value) {
-        this.should('have.value', value);
-        return this;
-    }
-
-    /**
-     * Asserts that the component does not have a specific value.
-     * @param {string} value - The expected value to check against.
-     * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
-     */
-    shouldNotHaveValue(value) {
-        this.should('not.have.value', value);
-        return this;
-    }
-
-    /**
      * Asserts that the component has a minimum length constraint set to an expected value.
      * @param {number} expectedLength - The expected minimum length to check for.
      * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
@@ -63,6 +43,24 @@ class TypeableComponent extends InteractiveComponent {
      */
     shouldHaveMainLength(expectedLength) {
         this.shouldHaveAttribute('maxlength', expectedLength.toString());
+        return this;
+    }
+
+    /**
+     * Asserts that the input is readonly.
+     * @returns {Input} This instance for chaining.
+     */
+    shouldBeReadonly() {
+        this.shouldHaveAttribute('readonly');
+        return this;
+    }
+
+    /**
+     * Asserts that the input is required.
+     * @returns {Input} This instance for chaining.
+     */
+    shouldBeRequired() {
+        this.shouldHaveAttribute('required');
         return this;
     }
 }

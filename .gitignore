@@ -17,6 +17,7 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+cypress.env.json
 
 # VSCode settings
 .vscode/

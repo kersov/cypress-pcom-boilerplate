@@ -6,12 +6,81 @@ class BasicComponent {
     /**
      * Creates a new instance of BasicComponent.
      * @param {string} id - The unique identifier for this component.
-     * @param {string} selector - The CSS selector used to locate the component on the page.
+     * @param {string|function|object} [options] - Selector string, callback function, or options object with selector, text, and/or callback.
      */
-    constructor(id, selector) {
+    constructor(id, options) {
         this.id = id;
-        this.selector = selector;
+        this.selector = '';
+        this.text = '';
+        this.callback = undefined;
+        if (typeof options === 'string') {
+            this.selector = options;
+        } else if (typeof options === 'function') {
+            this.callback = options;
+        } else if (typeof options === 'object' && options !== null) {
+            if (typeof options.selector === 'string') {
+                this.selector = options.selector;
+            }
+            if (typeof options.text === 'string') {
+                this.text = options.text;
+            }
+            if (typeof options.callback === 'function') {
+                this.callback = options.callback;
+            }
+        }
         this.nestedComponents = new Map();
+    }
+
+    /**
+     * Returns the Cypress chainable for the component using callback if available.
+     * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
+     */
+    getByCallback() {
+        if (!this.callback) {
+            throw new Error('No callback defined for this component.');
+        }
+        return this.callback();
+    }
+
+    /**
+     * Returns the Cypress chainable for the component's selector (if selector is set).
+     * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
+     */
+    getBySelector() {
+        return cy.get(this.selector);
+    }
+
+    /**
+     * Returns the Cypress chainable for the component's text using cy.contains.
+     * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
+     */
+    getByText() {
+        return cy.contains(this.text);
+    }
+
+    /**
+     * Returns the Cypress chainable for the component using selector if available, otherwise by text, otherwise by callback.
+     * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
+     */
+    get() {
+        if (this.callback) {
+            return this.getByCallback();
+        } else if (this.selector) {
+            return this.getBySelector();
+        } else if (this.text) {
+            return this.getByText();
+        } else {
+            throw new Error('Neither selector, text, nor callback is defined for this component.');
+        }
+    }
+
+    /**
+     * Finds a descendant element within this component using a selector.
+     * @param {string} selector - The selector to find within this component.
+     * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
+     */
+    find(selector) {
+        return this.get().find(selector);
     }
 
     /**
@@ -39,7 +108,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     click() {
-        cy.get(this.selector).click();
+        this.get().click();
         return this;
     }
 
@@ -75,7 +144,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     doubleClick() {
-        cy.get(this.selector).dblclick();
+        this.get().dblclick();
         return this;
     }
 
@@ -84,7 +153,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     rightClick() {
-        cy.get(this.selector).rightclick();
+        this.get().rightclick();
         return this;
     }
 
@@ -93,7 +162,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     focus() {
-        cy.get(this.selector).focus();
+        this.get().focus();
         return this;
     }
 
@@ -102,7 +171,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     blur() {
-        cy.get(this.selector).blur();
+        this.get().blur();
         return this;
     }
 
@@ -111,7 +180,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     hover() {
-        cy.get(this.selector).trigger('mouseover');
+        this.get().trigger('mouseover');
         return this;
     }
 
@@ -121,7 +190,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     scrollIntoView(smooth = false) {
-        cy.get(this.selector).scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+        this.get().scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
         return this;
     }
 
@@ -130,7 +199,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     pressEnter() {
-        cy.get(this.selector).type('{enter}');
+        this.get().type('{enter}');
         return this;
     }
 
@@ -139,7 +208,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     pressSpace() {
-        cy.get(this.selector).type(' ');
+        this.get().type(' ');
         return this;
     }
 
@@ -148,7 +217,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     pressUpArrow() {
-        cy.get(this.selector).type('{uparrow}');
+        this.get().type('{uparrow}');
         return this;
     }
 
@@ -157,7 +226,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     pressDownArrow() {
-        cy.get(this.selector).type('{downarrow}');
+        this.get().type('{downarrow}');
         return this;
     }
 
@@ -175,9 +244,9 @@ class BasicComponent {
             throw new Error('Assertion must be provided to should().');
         }
         if (typeof(value) !== 'undefined') {
-            cy.get(this.selector).should(assertion, value);
+            this.get().should(assertion, value);
         } else {
-            cy.get(this.selector).should(assertion);
+            this.get().should(assertion);
         }
         return this;
     }

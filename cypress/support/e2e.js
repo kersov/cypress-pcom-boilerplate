@@ -3,3 +3,5 @@
 // https://github.com/cypress-io/cypress/tree/develop/npm/grep
 const registerCypressGrep = require('@cypress/grep');
 registerCypressGrep();
+
+require('./pages.js');

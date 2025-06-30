@@ -13,7 +13,7 @@ class InteractiveComponent extends BasicComponent {
      * @returns {InteractiveComponent} This instance of InteractiveComponent for chaining calls.
      */
     enable() {
-        cy.get(this.selector).removeAttr('disabled');
+        this.get().removeAttr('disabled');
         return this;
     }
 
@@ -22,7 +22,7 @@ class InteractiveComponent extends BasicComponent {
      * @returns {InteractiveComponent} This instance of InteractiveComponent for chaining calls.
      */
     disable() {
-        cy.get(this.selector).attr('disabled', 'true');
+        this.get().attr('disabled', 'true');
         return this;
     }
 

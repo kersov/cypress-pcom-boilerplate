@@ -10,7 +10,7 @@ class Link extends BasicComponent {
     * @returns {Link} - The current instance of the Link object to allow for method chaining.
     */
     visitURL() {
-        cy.get(this.selector)
+        this.get()
             .should('have.attr', 'href') // Ensure it has an href attribute
             .then((href) => {
                 // Visit the URL directly
@@ -24,7 +24,7 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     openInNewTab() {
-        cy.get(this.selector).invoke('attr', 'target', '_blank');
+        this.get().invoke('attr', 'target', '_blank');
         return this;
     }
 
@@ -55,7 +55,7 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     shouldBeExternalLink() {
-        cy.get(this.selector).invoke('attr', 'href').then(href => {
+        this.get().invoke('attr', 'href').then(href => {
             cy.wrap(href).should('match', /^(http|https):\/\//);
         });
         return this;
@@ -66,7 +66,7 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     shouldBeInternalLink() {
-        cy.get(this.selector).invoke('attr', 'href').then(href => {
+        this.get().invoke('attr', 'href').then(href => {
             cy.wrap(href).should('not.match', /^(http|https):\/\//);
             cy.wrap(href).should('not.contain', '#');
         });

@@ -12,7 +12,7 @@ class Input extends TypeableComponent {
      * @returns {Input} This instance of Input for chaining calls.
      */
     check() {
-        cy.get(this.selector).check();
+        this.get().check();
         return this;
     }
 
@@ -21,7 +21,7 @@ class Input extends TypeableComponent {
      * @returns {Input} This instance of Input for chaining calls.
      */
     uncheck() {
-        cy.get(this.selector).uncheck();
+        this.get().uncheck();
         return this;
     }
 
@@ -51,7 +51,7 @@ class Input extends TypeableComponent {
      * @returns {Input} This instance of Input for chaining calls.
      */
     shouldBeChecked() {
-        cy.get(this.selector).should('be.checked');
+        this.get().should('be.checked');
         return this;
     }
 
@@ -60,7 +60,7 @@ class Input extends TypeableComponent {
      * @returns {Input} This instance of Input for chaining calls.
      */
     shouldNotBeChecked() {
-        cy.get(this.selector).should('not.be.checked');
+        this.get().should('not.be.checked');
         return this;
     }
 }

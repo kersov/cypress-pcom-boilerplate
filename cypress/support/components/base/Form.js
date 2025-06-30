@@ -10,7 +10,7 @@ class Form extends InteractiveComponent {
      * @returns {Form} This instance of Form for chaining calls.
      */
     submit() {
-        cy.get(this.selector).trigger('submit');
+        this.get().trigger('submit');
         return this;
     }
 }

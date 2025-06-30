@@ -11,7 +11,7 @@ class TypeableComponent extends InteractiveComponent {
      * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
     type(text, options = {}) {
-        cy.get(this.selector).type(text, options);
+        this.get().type(text, options);
         return this;
     }
 
@@ -20,7 +20,7 @@ class TypeableComponent extends InteractiveComponent {
      * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
     clear() {
-        cy.get(this.selector).clear();
+        this.get().clear();
         return this;
     }
 

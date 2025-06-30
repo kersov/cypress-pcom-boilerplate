@@ -9,7 +9,7 @@ class Select extends Input {
      * @returns {Select} This instance of Select for chaining calls.
      */
     selectOption(value) {
-        cy.get(this.selector).select(value);
+        this.get().select(value);
         return this;
     }
 
@@ -21,7 +21,7 @@ class Select extends Input {
      * @returns {Select} This instance of Select for chaining calls.
      */
     shouldHaveOption(text) {
-        cy.get(this.selector).find('option').should('contain', text);
+        this.get().find('option').should('contain', text);
         return this;
     }
 }

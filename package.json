@@ -22,10 +22,10 @@
   "scripts": {
     "test:e2e": "npm run test:e2e:dev:main",
     "test:e2e:dev:main": "npm run test:e2e:dev:main:default",
-    "test:e2e:dev:main:uk": "npm-run-all test:e2e:dev:main:default:*",
-    "test:e2e:dev:main:uk:mobile": "npx cypress run --env site=main,env=dev,locale=default,mode=mobile",
-    "test:e2e:dev:main:uk:tablet": "npx cypress run --env site=main,env=dev,locale=default,mode=tablet",
-    "test:e2e:dev:main:uk:desktop": "npx cypress run --env site=main,env=dev,locale=default,mode=desktop"
+    "test:e2e:dev:main:default": "npm-run-all test:e2e:dev:main:default:*",
+    "test:e2e:dev:main:default:mobile": "npx cypress run --env site=main,env=dev,locale=default,mode=mobile",
+    "test:e2e:dev:main:default:tablet": "npx cypress run --env site=main,env=dev,locale=default,mode=tablet",
+    "test:e2e:dev:main:default:desktop": "npx cypress run --env site=main,env=dev,locale=default,mode=desktop"
   },
   "dependencies": {
     "@cypress/grep": "^4.1.0",

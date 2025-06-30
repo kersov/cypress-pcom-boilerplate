@@ -33,7 +33,7 @@ function getEnvVariable({config, variable, env, site, locale}) {
     }
 
     // If none found, return undefined
-    return config ? config.env[key] : Cypress.env(variable); // Explicitly check the flat variable last
+    return config ? config.env[variable] : Cypress.env(variable); // Explicitly check the flat variable last
 }
 
 module.exports = { getEnvVariable };

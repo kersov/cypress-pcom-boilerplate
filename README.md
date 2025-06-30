@@ -16,14 +16,39 @@ To get started with this boilerplate, clone the repository and follow the setup 
 
 The boilerplate provides a set of reusable base component classes to model and interact with UI elements in a structured way:
 
-- **BasicComponent**: The foundational class for all components. Handles selectors, nested components, and basic actions like click and doubleClick.
-- **InteractiveComponent**: Extends BasicComponent with methods for enabling/disabling components and assertions for enabled/disabled state and value.
-- **TypeableComponent**: Extends InteractiveComponent, adding methods for typing, clearing, and value/length assertions—ideal for inputs and text areas.
+- **BasicComponent**: The foundational class for all components. Handles selectors, text, callback-based selection, nested components, and basic actions like click, doubleClick, rightClick, focus, blur, hover, scrollIntoView, and keyboard events. Supports assertions for visibility, existence, emptiness, text, attributes, and classes.
+- **InteractiveComponent**: Extends BasicComponent. Adds methods for enabling/disabling components and assertions for enabled/disabled state and value.
+- **TypeableComponent**: Extends InteractiveComponent. Adds methods for typing, clearing, and value/length assertions—ideal for inputs and text areas.
 - **Input**: Extends TypeableComponent. Adds methods for checking/unchecking/toggling checkboxes, asserting input types, and checking checked state.
-- **Button**: Extends InteractiveComponent. Represents button elements (custom functionality can be added as needed).
-- **Checkbox**: Extends Input. Represents checkbox inputs (inherits all Input methods).
+- **Button**: Extends InteractiveComponent. Represents button elements. Supports all basic and interactive actions.
+- **Checkbox**: Extends Input. Represents checkbox inputs (inherits all Input methods, plus check/uncheck/toggle convenience).
 - **Select**: Extends Input. Adds methods for selecting options and asserting available options in dropdowns.
 - **TextArea**: Extends TypeableComponent. Represents multi-line text input areas.
+
+### Defining Page Instances and Registering Components
+
+To follow the PCOM pattern, define your page objects and register components for each page:
+
+**Example: `page.js`**
+```js
+const ToDoPage = require('./toDoPage');
+
+Cypress.pages = {
+  toDoPage: new ToDoPage()
+};
+```
+
+**Example: `components.js`**
+```js
+const ToDoList = require('./cypress/support/components/cypress/ToDoList');
+
+module.exports = {
+  todoList: new ToDoList('todoList', '.todoapp')
+  // Add more components as needed
+};
+```
+
+In your page class (e.g., `toDoPage.js`), you can import and register components from `components.js` for easy access in your tests.
 
 ### Usage Examples
 

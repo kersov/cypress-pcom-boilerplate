@@ -10,20 +10,205 @@ This repository serves as a foundational Cypress boilerplate project designed to
 - **Test Tagging**: Organize and execute tests efficiently using tags.
 
 ## Getting Started
-To get started with this boilerplate, clone the repository and follow the setup instructions provided in the documentation.
+This section guides you through setting up the project on your local machine.
+
+## How to Install
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/kersov/cypress-pcom-boilerplate.git
+    cd cypress-pcom-boilerplate
+    ```
+
+2.  **Install dependencies:**
+    Make sure you have Node.js and npm installed. Then, run the following command in the project root to install the necessary dependencies:
+    ```bash
+    npm install
+    ```
+
+## How to Use
+
+This boilerplate is designed to help you write End-to-End (E2E) tests using Cypress, following the Page Component Object Model (PCOM) for a structured and maintainable test suite.
+
+### Project Structure Overview
+
+Before diving into running tests, it's helpful to understand the basic project structure:
+
+-   `cypress/`: Contains all Cypress-related files.
+    -   `e2e/`: Your test files (specs) go here.
+    -   `fixtures/`: Test data (e.g., JSON files) used in your tests.
+    -   `support/`: Reusable custom commands, PCOM setup, and utilities.
+        -   `components/`: Base and custom UI component classes.
+            -   `base/`: The core set of generic component classes provided by this boilerplate.
+            -   `custom/`: (Create this directory for your project-specific components that extend base components).
+        -   `pages/`: Page Object classes.
+        -   `utils/`: Utility functions.
+        -   `commands.js`: Custom Cypress commands.
+        -   `e2e.js`: Main support file, loaded before each spec file.
+        -   `pages.js`: Central registration for Page Objects.
+        -   `components.js`: Central registration/export for globally accessible components (optional).
+-   `cypress.config.js`: Cypress configuration file.
+-   `package.json`: Project metadata, dependencies, and npm scripts.
+
+### Writing Tests
+
+1.  **Create Page Objects**:
+    *   For each page in your application, create a corresponding Page Object class in `cypress/support/pages/*/`.
+    *   In each Page Object, instantiate the components present on that page using the base components or your custom components.
+
+2.  **Define Components**:
+    *   Use the base components from `cypress/support/components/base/` directly or extend them to create custom components in `cypress/support/components/*/` for more specific UI elements.
+    *   A component encapsulates interactions with a specific part of the UI (e.g., a navigation bar, a search form).
+
+3.  **Write Spec Files**:
+    *   Create your test files (e.g., `login.cy.js`) in the `cypress/e2e/` directory.
+    *   Use your Page Objects and use their methods and components to interact with your application.
+
+### Running Tests
+
+You can run tests using the npm scripts defined in `package.json`. For example, to run all tests for the 'main' site in the 'dev' environment across different devices:
+
+```bash
+# Run tests on mobile
+npm run test:e2e:dev:main:default:mobile
+
+# Run tests on tablet
+npm run test:e2e:dev:main:default:tablet
+
+# Run tests on desktop
+npm run test:e2e:dev:main:default:desktop
+```
+
+Refer to the `scripts` section in `package.json` for all available test execution commands.
+
+### Page Component Object Model (PCOM)
+
+PCOM is a design pattern that encourages the creation of reusable and maintainable test code. It involves breaking down web pages into components, and then creating objects that represent these components. This boilerplate provides base component classes (see "Base Components" section below) that you can extend to create your own custom components.
+
+**Key ideas:**
+-   **Pages:** Represent entire pages in your application (e.g., LoginPage, HomePage). They are responsible for providing access to the components on that page.
+-   **Components:** Represent individual UI elements or groups of elements (e.g., a login form, a navigation menu, a button). They encapsulate the logic for interacting with those elements.
+
+This structure helps to:
+-   **Reduce code duplication:** Common UI elements can be defined once and reused across multiple tests.
+-   **Improve maintainability:** If the UI changes, you only need to update the corresponding component object, rather than every test that interacts with that element.
+-   **Increase readability:** Tests become easier to understand as they interact with higher-level abstractions (page and component objects) rather than raw selectors.
 
 ## Base Components
 
-The boilerplate provides a set of reusable base component classes to model and interact with UI elements in a structured way:
+The boilerplate provides a set of reusable base component classes to model and interact with UI elements in a structured way. These components are located in `cypress/support/components/base/`.
 
-- **BasicComponent**: The foundational class for all components. Handles selectors, text, callback-based selection, nested components, and basic actions like click, doubleClick, rightClick, focus, blur, hover, scrollIntoView, and keyboard events. Supports assertions for visibility, existence, emptiness, text, attributes, and classes.
-- **InteractiveComponent**: Extends BasicComponent. Adds methods for enabling/disabling components and assertions for enabled/disabled state and value.
-- **TypeableComponent**: Extends InteractiveComponent. Adds methods for typing, clearing, and value/length assertions—ideal for inputs and text areas.
-- **Input**: Extends TypeableComponent. Adds methods for checking/unchecking/toggling checkboxes, asserting input types, and checking checked state.
-- **Button**: Extends InteractiveComponent. Represents button elements. Supports all basic and interactive actions.
-- **Checkbox**: Extends Input. Represents checkbox inputs (inherits all Input methods, plus check/uncheck/toggle convenience).
-- **Select**: Extends Input. Adds methods for selecting options and asserting available options in dropdowns.
-- **TextArea**: Extends TypeableComponent. Represents multi-line text input areas.
+Here's a breakdown of each base component:
+
+-   **`BasicComponent`**:
+    *   **Purpose**: The foundational class for all components. It handles common functionalities like element selection (using selectors or callback functions), text retrieval, interaction with nested components, and basic UI actions.
+    *   **Key Methods**: `click()`, `doubleClick()`, `rightClick()`, `focus()`, `blur()`, `hover()`, `scrollIntoView()`, `pressEnter()`, `pressEscape()`, etc.
+    *   **Key Assertions**: `shouldBeVisible()`, `shouldNotExist()`, `shouldBeEmpty()`, `shouldHaveText()`, `shouldHaveAttr()`, `shouldHaveClass()`, etc.
+    *   **Example**:
+        ```javascript
+        const BasicComponent = require('./cypress/support/components/base/BasicComponent');
+        const pageTitle = new BasicComponent('pageTitle', 'h1.main-title');
+
+        pageTitle.shouldBeVisible();
+        pageTitle.shouldHaveText('Welcome');
+        ```
+
+-   **`InteractiveComponent`**:
+    *   **Purpose**: Extends `BasicComponent`. It's designed for elements that users can interact with, adding capabilities to check if a component is enabled or disabled.
+    *   **Key Methods**: Inherits all from `BasicComponent`.
+    *   **Key Assertions**: `shouldBeEnabled()`, `shouldBeDisabled()`, `shouldHaveValue()`.
+    *   **Example**:
+        ```javascript
+        const InteractiveComponent = require('./cypress/support/components/base/InteractiveComponent');
+        const submitButton = new InteractiveComponent('submitButton', '#submit-form');
+
+        submitButton.shouldBeEnabled();
+        submitButton.click();
+        ```
+
+-   **`TypeableComponent`**:
+    *   **Purpose**: Extends `InteractiveComponent`. This component is for elements that accept text input, like input fields and text areas. It provides methods for typing, clearing content, and asserting values.
+    *   **Key Methods**: `type()`, `clear()`. Inherits others.
+    *   **Key Assertions**: `shouldHaveValue()`, `shouldHaveLength()`. Inherits others.
+    *   **Example**:
+        ```javascript
+        const TypeableComponent = require('./cypress/support/components/base/TypeableComponent');
+        const searchBar = new TypeableComponent('searchBar', 'input[type="search"]');
+
+        searchBar.type('Cypress tests');
+        searchBar.shouldHaveValue('Cypress tests');
+        searchBar.clear().shouldBeEmpty();
+        ```
+
+-   **`Input`**:
+    *   **Purpose**: Extends `TypeableComponent`. Specifically designed for various HTML `<input>` elements. It adds specialized methods for checkboxes and radio buttons, and assertions for input types.
+    *   **Key Methods**: `check()`, `uncheck()`, `toggle()`. Inherits others.
+    *   **Key Assertions**: `shouldBeChecked()`, `shouldNotBeChecked()`, `shouldHaveType()`. Inherits others.
+    *   **Example**:
+        ```javascript
+        const Input = require('./cypress/support/components/base/Input');
+        const emailInput = new Input('emailInput', '#email');
+        const termsCheckbox = new Input('termsCheckbox', '#terms-and-conditions');
+
+        emailInput.type('test@example.com').shouldHaveValue('test@example.com');
+        emailInput.shouldHaveType('email');
+
+        termsCheckbox.check().shouldBeChecked();
+        termsCheckbox.uncheck().shouldNotBeChecked();
+        ```
+
+-   **`Button`**:
+    *   **Purpose**: Extends `InteractiveComponent`. Represents clickable button elements.
+    *   **Key Methods**: Inherits all from `InteractiveComponent` (e.g., `click()`).
+    *   **Key Assertions**: Inherits all from `InteractiveComponent` (e.g., `shouldBeEnabled()`).
+    *   **Example**:
+        ```javascript
+        const Button = require('./cypress/support/components/base/Button');
+        const loginButton = new Button('loginButton', 'button#login');
+
+        loginButton.shouldBeVisible().shouldBeEnabled();
+        loginButton.click();
+        ```
+
+-   **`Checkbox`**:
+    *   **Purpose**: Extends `Input`. Tailored for checkbox inputs, inheriting all `Input` methods and providing convenience for checkbox-specific interactions.
+    *   **Key Methods**: Inherits `check()`, `uncheck()`, `toggle()` from `Input`.
+    *   **Key Assertions**: Inherits `shouldBeChecked()`, `shouldNotBeChecked()` from `Input`.
+    *   **Example**:
+        ```javascript
+        const Checkbox = require('./cypress/support/components/base/Checkbox');
+        const newsletterCheckbox = new Checkbox('newsletterCheckbox', '#subscribe-newsletter');
+
+        newsletterCheckbox.check().shouldBeChecked();
+        newsletterCheckbox.uncheck().shouldNotBeChecked();
+        ```
+
+-   **`Select`**:
+    *   **Purpose**: Extends `Input`. Designed for `<select>` dropdown elements. It adds methods for selecting options by value or text and asserting available options.
+    *   **Key Methods**: `selectOptionByValue()`, `selectOptionByText()`. Inherits others.
+    *   **Key Assertions**: `shouldHaveOption()`, `shouldHaveSelectedOption()`. Inherits others.
+    *   **Example**:
+        ```javascript
+        const Select = require('./cypress/support/components/base/Select');
+        const countryDropdown = new Select('countryDropdown', '#country-select');
+
+        countryDropdown.selectOptionByValue('US');
+        countryDropdown.shouldHaveSelectedOption('United States');
+        countryDropdown.shouldHaveOption('Canada');
+        ```
+
+-   **`TextArea`**:
+    *   **Purpose**: Extends `TypeableComponent`. Represents multi-line text input areas (`<textarea>`).
+    *   **Key Methods**: Inherits `type()`, `clear()` from `TypeableComponent`.
+    *   **Key Assertions**: Inherits `shouldHaveValue()`, `shouldHaveLength()` from `TypeableComponent`.
+    *   **Example**:
+        ```javascript
+        const TextArea = require('./cypress/support/components/base/TextArea');
+        const commentBox = new TextArea('commentBox', '#comment');
+
+        commentBox.type('This is a test comment.');
+        commentBox.shouldHaveValue('This is a test comment.');
+        ```
 
 ### Defining Page Instances and Registering Components
 

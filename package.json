@@ -1,0 +1,35 @@
+{
+  "name": "cypress-pcom-boilerplate",
+  "version": "0.0.1",
+  "description": "A foundational Cypress boilerplate project utilizing the Page Component Object Model (PCOM) for scalable, maintainable end-to-end testing. Supports cross-environment, cross-device, multi-language testing, and test tagging.",
+  "keywords": [
+    "cypress",
+    "PCOM",
+    "e2e"
+  ],
+  "homepage": "https://github.com/kersov/cypress-pcom-boilerplate#readme",
+  "bugs": {
+    "url": "https://github.com/kersov/cypress-pcom-boilerplate/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kersov/cypress-pcom-boilerplate.git"
+  },
+  "license": "MIT",
+  "author": "Oleksii Kersov",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test:e2e": "npm run test:e2e:dev:main",
+    "test:e2e:dev:main": "npm run test:e2e:dev:main:default",
+    "test:e2e:dev:main:default": "npm-run-all test:e2e:dev:main:default:*",
+    "test:e2e:dev:main:default:mobile": "npx cypress run --env site=main,env=dev,locale=default,mode=mobile",
+    "test:e2e:dev:main:default:tablet": "npx cypress run --env site=main,env=dev,locale=default,mode=tablet",
+    "test:e2e:dev:main:default:desktop": "npx cypress run --env site=main,env=dev,locale=default,mode=desktop"
+  },
+  "dependencies": {
+    "@cypress/grep": "^4.1.0",
+    "cypress": "^14.5.0",
+    "npm-run-all": "^4.1.5"
+  }
+}

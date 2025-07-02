@@ -66,24 +66,90 @@ Before diving into running tests, it's helpful to understand the basic project s
 
 ### Running Tests
 
-You can run tests using the npm scripts defined in `package.json`. For example, to run all tests for the 'main' site in the 'dev' environment across different devices:
+You can run tests using the npm scripts defined in `package.json`. These scripts often follow a pattern like `npm run test:e2e:<env>:<site>:<locale>:<device>`.
+
+Here are some examples based on the scripts currently available in `package.json`:
 
 ```bash
-# Run tests on mobile
+# Run all tests for the 'main' site in the 'dev' environment and 'default' locale, across all defined devices
+npm run test:e2e:dev:main:default
+
+# Run tests specifically on mobile for 'main' site, 'dev' environment, 'default' locale
 npm run test:e2e:dev:main:default:mobile
 
-# Run tests on tablet
+# Run tests specifically on tablet for 'main' site, 'dev' environment, 'default' locale
 npm run test:e2e:dev:main:default:tablet
 
-# Run tests on desktop
+# Run tests specifically on desktop for 'main' site, 'dev' environment, 'default' locale
 npm run test:e2e:dev:main:default:desktop
 ```
 
-Refer to the `scripts` section in `package.json` for all available test execution commands.
+To run tests with different configurations (e.g., other sites, environments, or locales), you would typically add new scripts to your `package.json` following a similar pattern, or run Cypress directly with specific environment variables. For example:
+
+```bash
+# Example of running Cypress directly for a hypothetical 'stg' environment and 'otherSite'
+npx cypress run --env site=otherSite,env=stg,locale=en,mode=desktop
+```
+
+Refer to the `scripts` section in `package.json` for all currently configured test execution commands. You can customize or add new scripts to suit your project's needs.
 
 ### Page Component Object Model (PCOM)
 
 PCOM is a design pattern that encourages the creation of reusable and maintainable test code. It involves breaking down web pages into components, and then creating objects that represent these components. This boilerplate provides base component classes (see "Base Components" section below) that you can extend to create your own custom components.
+
+## Environment Variables
+
+This project utilizes several environment variables to configure test runs, manage credentials, and define target environments. These variables can be set via system environment variables (e.g., `CYPRESS_VARIABLE_NAME=value`), in a `cypress.env.json` file, or passed via command-line arguments (`--env VARIABLE_NAME=value`).
+
+The `envUtils.js` utility allows for a hierarchical lookup for some variables (like `URL`, `USERNAME`, `PASSWORD`), meaning you can define general variables and override them with more specific ones using a pattern like `ENV.SITE.LOCALE.VARIABLE_NAME` (e.g., `dev.main.en.username`).
+
+Below is a list of commonly used environment variables:
+
+*   **`SITE`**:
+    *   **Description**: Specifies the target site configuration. This allows different setups or base URLs for various application versions (e.g., 'main', 'clientXSite').
+    *   **Default**: `'main'` (as set in `siteConfigUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_SITE=clientA` or in `cypress.env.json`: `{ "SITE": "clientA" }`
+
+*   **`ENV`**:
+    *   **Description**: Defines the testing environment (e.g., 'dev', 'stg', 'prod', 'sandbox'). This directs tests to the correct deployment and applies environment-specific settings.
+    *   **Default**: `'dev'` (as set in `siteConfigUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_ENV=stg` or via CLI: `--env ENV=stg`
+
+*   **`LOCALE`**:
+    *   **Description**: Specifies the locale or language for tests (e.g., 'en-US', 'es-MX', 'default'). Essential for applications with internationalization.
+    *   **Default**: `'default'` (as set in `siteConfigUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_LOCALE=fr-CA` or in `cypress.env.json`: `{ "LOCALE": "fr-CA" }`
+
+*   **`MODE`**:
+    *   **Description**: Defines the device mode or viewport for testing, used to simulate screen sizes like 'mobile', 'tablet', or 'desktop'. This is often used by the test execution scripts in `package.json`.
+    *   **Example**: `CYPRESS_MODE=tablet` or via CLI in scripts: `--env mode=tablet`
+
+*   **`URL`**:
+    *   **Description**: The explicit base URL for the application under test. Especially used when `ENV` is 'sandbox'. Can also be defined with higher precedence using the `ENV.SITE.LOCALE.url` pattern (e.g., `dev.main.en.url`).
+    *   **Example**: `CYPRESS_URL=http://localhost:8080` or in `cypress.env.json`: `{ "dev.mysite.url": "https://dev.mysite.com" }`
+
+*   **`USERNAME`**:
+    *   **Description**: Username for basic authentication or application login. Used by `urlUtils.js` to construct URLs for environments requiring authentication. Can be scoped by `ENV`, `SITE`, and `LOCALE`.
+    *   **Example**: `CYPRESS_USERNAME=testUser` or in `cypress.env.json`: `{ "dev.main.en.username": "user123" }`
+
+*   **`PASSWORD`**:
+    *   **Description**: Password for basic authentication or application login. Used similarly to `USERNAME` by `urlUtils.js` and can also be scoped.
+    *   **Example**: `CYPRESS_PASSWORD=securePassword123` or in `cypress.env.json`: `{ "dev.main.en.password": "Password!" }`
+
+*   **`RETRIES`**:
+    *   **Description**: Sets the number of times Cypress will retry failed tests. This applies globally for both `runMode` (headless) and `openMode` (interactive).
+    *   **Default**: `0` (as set in `siteConfigUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_RETRIES=1` or in `cypress.env.json`: `{ "retries": 1 }`
+
+*   **`LOAD_TIMEOUT`**:
+    *   **Description**: The time (in milliseconds) Cypress waits for a page to fire its `load` event before timing out.
+    *   **Default**: `60000` (60 seconds, as set in `siteConfigUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_LOAD_TIMEOUT=100000` or in `cypress.env.json`: `{ "loadTimeout": 100000 }`
+
+*   **`COMMAND_TIMEOUT`**:
+    *   **Description**: The default time (in milliseconds) Cypress waits for most commands (e.g., `cy.get()`, `cy.click()`) to complete before timing out.
+    *   **Default**: `4000` (4 seconds, as set in `siteConfigUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_COMMAND_TIMEOUT=8000` or in `cypress.env.json`: `{ "commandTimeout": 8000 }`
 
 **Key ideas:**
 -   **Pages:** Represent entire pages in your application (e.g., LoginPage, HomePage). They are responsible for providing access to the components on that page.

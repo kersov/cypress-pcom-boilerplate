@@ -103,7 +103,37 @@ This project utilizes several environment variables to configure test runs, mana
 
 The `envUtils.js` utility allows for a hierarchical lookup for some variables (like `URL`, `USERNAME`, `PASSWORD`), meaning you can define general variables and override them with more specific ones using a pattern like `ENV.SITE.LOCALE.VARIABLE_NAME` (e.g., `dev.main.en.username`).
 
-Below is a list of commonly used environment variables:
+### Using `cypress.env.json`
+
+A convenient way to manage your environment variables for Cypress is by using a `cypress.env.json` file in the root of your project. Cypress automatically loads variables from this file. This is particularly useful for storing non-sensitive project-specific settings or overriding default configurations.
+
+**Note:** It's crucial **not** to commit sensitive credentials (like actual production usernames and passwords) directly into `cypress.env.json` if the repository is public or shared. For sensitive data, prefer using system environment variables or a secure secrets management solution.
+
+Here's an example of how `cypress.env.json` might look:
+
+```json
+{
+  "username": "user",
+  "password": "password",
+  "retries": 2,
+  "loadTimeout": 60000,
+  "commandTimeout": 4000,
+  "sandbox.url": "https://example.cypress.io"
+}
+```
+
+In this example:
+-   `username` and `password`: Could be used for test accounts on a staging or development environment.
+-   `retries`: Overrides the default number of retries for failed tests.
+-   `loadTimeout`: Customizes the page load timeout.
+-   `commandTimeout`: Adjusts the default command timeout.
+-   `sandbox.url`: Defines a specific URL for a "sandbox" environment, which could be accessed in tests via `Cypress.env('sandbox.url')`.
+
+Variables defined in `cypress.env.json` can be accessed in your tests using `Cypress.env('VARIABLE_NAME')`. For example, `Cypress.env('username')` would return `"user"`.
+
+### Commonly Used Environment Variables
+
+Below is a list of commonly used environment variables (which can also be set in `cypress.env.json` as shown above):
 
 *   **`SITE`**:
     *   **Description**: Specifies the target site configuration. This allows different setups or base URLs for various application versions (e.g., 'main', 'clientXSite').

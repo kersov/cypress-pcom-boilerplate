@@ -17,11 +17,11 @@ class BasicPage {
      * @return {BasicPage} Returns the instance of BasicPage for method chaining.
      */
     addComponent(component) {
-        this.components.set(component.id, component);
+        this.components.set(component.uid, component);
 
         // Add nested components at the same level
         component.getNestedComponents().forEach(nestedComponent => {
-            this.components.set(nestedComponent.id, nestedComponent);
+            this.components.set(nestedComponent.uid, nestedComponent);
         });
         return this;
     }

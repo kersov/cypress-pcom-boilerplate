@@ -1,6 +1,6 @@
 {
   "name": "cypress-pcom-boilerplate",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A foundational Cypress boilerplate project utilizing the Page Component Object Model (PCOM) for scalable, maintainable end-to-end testing. Supports cross-environment, cross-device, multi-language testing, and test tagging.",
   "keywords": [
     "cypress",

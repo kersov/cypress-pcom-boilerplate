@@ -5,21 +5,28 @@ class BasicComponent {
     /** CONSTRUCTION */
     /**
      * Creates a new instance of BasicComponent.
-     * @param {string} id - The unique identifier for this component.
+     * @param {string} uid - The unique identifier for this component.
      * @param {string|function|object} [options] - Selector string, callback function, or options object with selector, text, and/or callback.
      */
-    constructor(id, options) {
-        this.id = id;
+    constructor(uid, options) {
+        this.uid = uid;
         this.selector = '';
         this.text = '';
         this.callback = undefined;
+        this.id = undefined;
+        const setSelector = (selector) => {
+            this.selector = selector;
+            if (selector.startsWith('#')) {
+                this.id = selector.substring(1);
+            }
+        };
         if (typeof options === 'string') {
-            this.selector = options;
+            setSelector(options);
         } else if (typeof options === 'function') {
             this.callback = options;
         } else if (typeof options === 'object' && options !== null) {
             if (typeof options.selector === 'string') {
-                this.selector = options.selector;
+                setSelector(options.selector);
             }
             if (typeof options.text === 'string') {
                 this.text = options.text;
@@ -89,7 +96,7 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     addNestedComponent(component) {
-        this.nestedComponents.set(component.id, component);
+        this.nestedComponents.set(component.uid, component);
         return this;
     }
 
@@ -104,11 +111,16 @@ class BasicComponent {
     /** ACTION METHODS */
 
     /**
-     * Clicks on the component.
+     * Clicks on the component. Optionally accepts options (string or object) to pass to Cypress click().
+     * @param {string|object} [options] - Position string (e.g., 'topLeft') or options object for Cypress click.
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
-    click() {
-        this.get().click();
+    click(options) {
+        if (typeof options !== 'undefined') {
+            this.get().click(options);
+        } else {
+            this.get().click();
+        }
         return this;
     }
 
@@ -195,6 +207,17 @@ class BasicComponent {
     }
 
     /**
+     * Scrolls the component to a specific position or coordinates using Cypress .scrollTo().
+     * Accepts any arguments supported by Cypress .scrollTo().
+     * @param {...any} args - Arguments to pass to Cypress .scrollTo().
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    scrollTo(...args) {
+        this.get().scrollTo(...args);
+        return this;
+    }
+
+    /**
      * Presses the Enter key on the component.
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
@@ -230,24 +253,42 @@ class BasicComponent {
         return this;
     }
 
+    /**
+     * Invokes a jQuery method on the component using Cypress .invoke().
+     * @param {string} method - The jQuery method or property to invoke.
+     * @param {...any} args - Arguments to pass to the invoked method.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    invoke(method, ...args) {
+        this.get().invoke(method, ...args);
+        return this;
+    }
+
+    /**
+     * Triggers a DOM event on the component using Cypress .trigger().
+     * @param {string} eventName - The name of the event to trigger.
+     * @param {...any} args - Additional arguments to pass to .trigger().
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    trigger(eventName, ...args) {
+        this.get().trigger(eventName, ...args);
+        return this;
+    }
+
     /** ASSERTION METHODS */
 
     /**
      * Asserts that the component meets a given condition.
      * @param {string} assertion - The assertion to make about the component. Must be a valid Chai assertion.
-     * @param {any} [value] - Optional value to compare against in the assertion.
+     * @param {...any} values - Optional values to compare against in the assertion.
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
-    should(assertion, value) {
+    should(assertion, ...values) {
         if (!assertion) {
             // Fail the test if no assertion is provided
             throw new Error('Assertion must be provided to should().');
         }
-        if (typeof(value) !== 'undefined') {
-            this.get().should(assertion, value);
-        } else {
-            this.get().should(assertion);
-        }
+        this.get().should(assertion, ...values);
         return this;
     }
 

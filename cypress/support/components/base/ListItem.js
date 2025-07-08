@@ -1,8 +1,8 @@
 const BasicComponent = require('./BasicComponent');
 
 // TODO: add functionality
-class ListElement extends BasicComponent {
+class ListItem extends BasicComponent {
 
 }
 
-module.exports = ListElement;
+module.exports = ListItem;

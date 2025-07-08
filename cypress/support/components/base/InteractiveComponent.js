@@ -9,20 +9,22 @@ class InteractiveComponent extends BasicComponent {
     /** ACTION METHODS */
 
     /**
-     * Enables the interactive component by removing the 'disabled' attribute or setting it to false.
+     * Enables the interactive component by removing the 'disabled' attribute using Cypress .invoke().
+     *
      * @returns {InteractiveComponent} This instance of InteractiveComponent for chaining calls.
      */
     enable() {
-        this.get().removeAttr('disabled');
+        this.invoke('removeAttr', 'disabled');
         return this;
     }
 
     /**
-     * Disables the interactive component by adding the 'disabled' attribute or setting it to true.
+     * Disables the interactive component by setting the 'disabled' attribute using Cypress .invoke().
+     *
      * @returns {InteractiveComponent} This instance of InteractiveComponent for chaining calls.
      */
     disable() {
-        this.get().attr('disabled', 'true');
+        this.invoke('attr', 'disabled', 'true');
         return this;
     }
 

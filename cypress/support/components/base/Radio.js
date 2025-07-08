@@ -1,8 +1,8 @@
 const Input = require('./Input');
 
 // TODO: add functionality
-class RadioButton extends Input {
+class Radio extends Input {
 
 }
 
-module.exports = RadioButton;
+module.exports = Radio;

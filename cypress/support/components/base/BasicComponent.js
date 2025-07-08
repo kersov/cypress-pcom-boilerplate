@@ -352,6 +352,28 @@ class BasicComponent {
         return this;
     }
 
+    /**
+     * Invokes a jQuery method on the component using Cypress .invoke().
+     * @param {string} method - The jQuery method or property to invoke.
+     * @param {...any} args - Arguments to pass to the invoked method.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    invoke(method, ...args) {
+        this.get().invoke(method, ...args);
+        return this;
+    }
+
+    /**
+     * Triggers a DOM event on the component using Cypress .trigger().
+     * @param {string} eventName - The name of the event to trigger.
+     * @param {...any} args - Additional arguments to pass to .trigger().
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    trigger(eventName, ...args) {
+        this.get().trigger(eventName, ...args);
+        return this;
+    }
+
     /** ASSERTION METHODS */
 
     /**

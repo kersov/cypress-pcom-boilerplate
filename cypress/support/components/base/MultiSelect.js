@@ -22,7 +22,7 @@ class MultiSelect extends Select {
      * @returns {MultiSelect} This instance of MultiSelect for chaining calls.
      */
     deselectAll() {
-        this.invoke('val', []).trigger('change');
+        this.get().invoke('val', []).trigger('change');
         return this;
     }
 
@@ -34,7 +34,7 @@ class MultiSelect extends Select {
      * @returns {MultiSelect} This instance of MultiSelect for chaining calls.
      */
     shouldHaveSelectedValues(expectedValues) {
-        this.invoke('val').should('deep.equal', expectedValues);
+        this.get().invoke('val').should('deep.equal', expectedValues);
         return this;
     }
 
@@ -44,7 +44,7 @@ class MultiSelect extends Select {
      * @returns {MultiSelect} This instance of MultiSelect for chaining calls.
      */
     shouldIncludeSelectedValue(value) {
-        this.invoke('val').should('include', value);
+        this.get().invoke('val').should('include', value);
         return this;
     }
 }

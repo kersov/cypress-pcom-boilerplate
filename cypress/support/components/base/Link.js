@@ -24,7 +24,7 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     openInNewTab() {
-        this.get().invoke('attr', 'target', '_blank');
+        this.invoke('attr', 'target', '_blank');
         return this;
     }
 
@@ -55,7 +55,7 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     shouldBeExternalLink() {
-        this.get().invoke('attr', 'href').then(href => {
+        this.invoke('attr', 'href').then(href => {
             cy.wrap(href).should('match', /^(http|https):\/\//);
         });
         return this;
@@ -66,7 +66,7 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     shouldBeInternalLink() {
-        this.get().invoke('attr', 'href').then(href => {
+        this.invoke('attr', 'href').then(href => {
             cy.wrap(href).should('not.match', /^(http|https):\/\//);
             cy.wrap(href).should('not.contain', '#');
         });

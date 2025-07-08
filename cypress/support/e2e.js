@@ -4,4 +4,6 @@
 const registerCypressGrep = require('@cypress/grep');
 registerCypressGrep();
 
+require('cypress-wait-until');
+
 require('./pages.js');

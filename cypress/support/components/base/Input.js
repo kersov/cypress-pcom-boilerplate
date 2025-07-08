@@ -9,8 +9,17 @@ class Input extends TypeableComponent {
     /** ACTION METHODS */
 
     /**
-     * Checks a checkbox input if it's not already checked.
-     * Accepts any arguments and passes them to Cypress .check().
+     * Checks a checkbox or radio input using Cypress .check().
+     *
+     * Supported argument patterns:
+     * - check(value)
+     * - check(value, options)
+     * - check(values)
+     * - check(values, options)
+     * - check(options)
+     *
+     * @param {string|number|Array<string|number>} [valueOrValues] - Value or array of values of inputs to check.
+     * @param {Object} [options] - Options object for Cypress .check(), e.g., { force: true }.
      * @returns {Input} This instance of Input for chaining calls.
      */
     check(...args) {
@@ -19,8 +28,17 @@ class Input extends TypeableComponent {
     }
 
     /**
-     * Unchecks a checkbox input if it's checked.
-     * Accepts any arguments and passes them to Cypress .uncheck().
+     * Unchecks a checkbox input using Cypress .uncheck().
+     *
+     * Supported argument patterns:
+     * - uncheck(value)
+     * - uncheck(value, options)
+     * - uncheck(values)
+     * - uncheck(values, options)
+     * - uncheck(options)
+     *
+     * @param {string|number|Array<string|number>} [valueOrValues] - Value or array of values of checkboxes to uncheck.
+     * @param {Object} [options] - Options object for Cypress .uncheck(), e.g., { force: true }.
      * @returns {Input} This instance of Input for chaining calls.
      */
     uncheck(...args) {
@@ -30,10 +48,12 @@ class Input extends TypeableComponent {
 
     /**
      * Toggles the state of a checkbox input (checks if unchecked, unchecks if checked).
+     *
+     * @param {Object} [options] - Options object for Cypress .click(), e.g., { force: true }.
      * @returns {Input} This instance of Input for chaining calls.
      */
-    toggle() {
-        this.click();
+    toggle(options) {
+        this.click(options);
         return this;
     }
 

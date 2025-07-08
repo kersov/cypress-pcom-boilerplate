@@ -4,12 +4,14 @@ class Select extends Input {
     /** ACTION METHODS */
 
     /**
-     * Selects an option by value in the dropdown.
+     * Selects an option by value in the dropdown using Cypress .select().
+     *
      * @param {string} value - The value of the option to select.
+     * @param {Object} [options] - Options object for Cypress .select(), e.g., { force: true }.
      * @returns {Select} This instance of Select for chaining calls.
      */
-    selectOption(value) {
-        this.get().select(value);
+    selectOption(value, options) {
+        this.get().select(value, options);
         return this;
     }
 

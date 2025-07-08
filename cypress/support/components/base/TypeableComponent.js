@@ -5,22 +5,13 @@ const InteractiveComponent = require('./InteractiveComponent');
  */
 class TypeableComponent extends InteractiveComponent {
     /**
-     * Types text into the component.
-     * @param {string} text - The text to type.
-     * @param {object} [options={}] - Optional options for typing (see Cypress.type() documentation).
+     * Clears the content from the component using Cypress .clear().
+     *
+     * @param {Object} [options] - Options object for Cypress .clear(), e.g., { force: true }.
      * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
-    type(text, options = {}) {
-        this.get().type(text, options);
-        return this;
-    }
-
-    /**
-     * Clears the content from the component.
-     * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
-     */
-    clear() {
-        this.get().clear();
+    clear(options) {
+        this.get().clear(options);
         return this;
     }
 
@@ -31,7 +22,7 @@ class TypeableComponent extends InteractiveComponent {
      * @param {number} expectedLength - The expected minimum length to check for.
      * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
-    shouldHaveMaxLength(expectedLength) {
+    shouldHaveMinLength(expectedLength) {
         this.shouldHaveAttribute('minlength', expectedLength.toString());
         return this;
     }
@@ -41,7 +32,7 @@ class TypeableComponent extends InteractiveComponent {
      * @param {number} expectedLength - The expected maximum length to check for.
      * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
-    shouldHaveMainLength(expectedLength) {
+    shouldHaveMaxLength(expectedLength) {
         this.shouldHaveAttribute('maxlength', expectedLength.toString());
         return this;
     }

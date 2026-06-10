@@ -422,12 +422,23 @@ items.first().shouldContainText('Pay electric bill');
 
 ## Base Page
 
-Page Objects extend `BasicPage` (`cypress/support/pages/base/BasicPage.js`), which provides:
+Page Objects extend `BasicPage` (`cypress/support/pages/base/BasicPage.js`). The constructor takes a `path`, which may contain `:token` placeholders (e.g. `/users/:id`).
 
--   `open()` — visits the page's `path` (relative to the configured `baseUrl`).
--   `verifyPageIsOpened()` — asserts the current URL includes the page's `path`.
+**Navigation:**
+-   `open(options)` — visits the page's resolved `path` (relative to the configured `baseUrl`). `options.params` substitutes `:token` placeholders; all other options are forwarded to `cy.visit()` (e.g., `{ failOnStatusCode: false }`).
+-   `reload()`, `goBack()`, `goForward()`, `scrollToTop()`, `scrollToBottom()`.
+
+**Assertions:**
+-   `verifyPageIsOpened()` — asserts the current URL includes the page's path.
+-   `shouldHavePath(path)` — asserts the location pathname exactly equals the page's (or given) path.
+-   `shouldHaveTitle(title)` / `shouldContainTitle(text)` — document title assertions.
+-   `shouldHaveQueryParam(name, value)` — asserts a query parameter is present, optionally with a specific value.
+
+**Component management:**
 -   `addComponent(component)` — registers a component (and its nested components) on the page.
--   `getComponentById(uid)` — retrieves a registered component.
+-   `getComponent(uid)` / `hasComponent(uid)` — retrieve or check for a registered component.
+
+If a page's path differs per environment or locale, resolve it where the page instance is created (e.g., in `pages.js`, using `Cypress.env()` to pick the right path) and pass the result to the constructor.
 
 ```js
 const BasicPage = require('../base/BasicPage');
@@ -442,6 +453,13 @@ class LoginPage extends BasicPage {
 }
 
 module.exports = LoginPage;
+```
+
+```js
+// In a spec
+const page = Cypress.pages.userPage; // new UserPage('/users/:id')
+page.open({ params: { id: 42 } })    // visits /users/42
+    .shouldHavePath();
 ```
 
 ## Registering Pages and Components

@@ -44,7 +44,7 @@ Environment variable lookup (`cypress/support/utils/envUtils.js`) is hierarchica
 Two class trees under `cypress/support/`:
 
 - **Components** (`components/base/`) encapsulate UI elements. Inheritance chain: `BasicComponent` → `InteractiveComponent` → `TypeableComponent` → `Input` → `Checkbox`/`Radio`/`Select` (→ `MultiSelect`). `Button` and `Form` extend `InteractiveComponent`; `TextArea` extends `TypeableComponent`; `Image`, `Label`, `Link`, `List`, `ListItem`, `Modal` extend `BasicComponent`. `Group.js` is a **mixin**, not a class: `class MyGroup extends Group(BasicComponent)`.
-- **Pages** (`pages/base/BasicPage.js`) hold a `Map` of components (`addComponent` also flattens in nested components), plus `open()` and `verifyPageIsOpened()`.
+- **Pages** (`pages/base/BasicPage.js`) hold a `Map` of components (`addComponent` also flattens in nested components). Constructor is `new Page(path)` — `path` may contain `:token` placeholders substituted via `open({params})`; per-env/locale paths are resolved by the caller when instantiating the page. Navigation (`open`, `reload`, `goBack/goForward`, `scrollToTop/Bottom`) and assertions (`verifyPageIsOpened`, `shouldHavePath`, `shouldHaveTitle/ContainTitle`, `shouldHaveQueryParam`) all return `this`.
 
 Component conventions:
 - Constructor is `new Component(uid, options)` where `options` is a selector string, a callback returning a Cypress chainable, or `{selector, text, callback}`. Resolution priority in `get()`: callback → selector → text (`cy.contains`).

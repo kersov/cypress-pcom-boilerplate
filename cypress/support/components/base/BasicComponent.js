@@ -16,7 +16,7 @@ class BasicComponent {
         this.id = undefined;
         const setSelector = (selector) => {
             this.selector = selector;
-            if (selector.startsWith('#')) {
+            if (/^#[\w-]+$/.test(selector)) {
                 this.id = selector.substring(1);
             }
         };
@@ -66,7 +66,7 @@ class BasicComponent {
     }
 
     /**
-     * Returns the Cypress chainable for the component using selector if available, otherwise by text, otherwise by callback.
+     * Returns the Cypress chainable for the component using callback if available, otherwise by selector, otherwise by text.
      * @returns {Cypress.Chainable<JQuery<HTMLElement>>}
      */
     get() {
@@ -118,7 +118,9 @@ class BasicComponent {
     }
 
     /**
-     * Clicks on the component if it is visible within a specified timeout, forwarding click arguments.
+     * Clicks on the component if it becomes visible within a specified timeout, forwarding click arguments.
+     * Does nothing (without failing the test) if the component never becomes visible.
+     * Only supported for selector- or text-based components.
      * @param {number} [timeout=Cypress.env('commandTimeout')] - The maximum time to wait for the element to be visible.
      * @param {string|number} [positionOrX] - Position string (e.g., 'topLeft') or X-coordinate, forwarded to .click().
      * @param {number|Object} [yOrOptions] - Y-coordinate when first arg is number, or options object when first arg is string.
@@ -126,32 +128,24 @@ class BasicComponent {
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     clickIfVisible(timeout = Cypress.env('commandTimeout'), ...args) {
-        const interval = 100;
+        if (!this.selector && !this.text) {
+            throw new Error('clickIfVisible() is only supported for selector- or text-based components.');
+        }
+        const findVisible = ($body) => {
+            const $candidates = this.selector
+                ? $body.find(this.selector)
+                : $body.find('*').filter((_, el) => Cypress.$(el).text().includes(this.text));
+            return $candidates.filter(':visible').last();
+        };
         cy.get('body').then(($body) => {
             const startTime = Date.now();
-            cy.waitUntil(() => {
-                const elapsed = Date.now() - startTime;
-                if (elapsed + interval >= timeout) {
-                    return Cypress.Promise.resolve(true);
-                }
-                if (this.selector) {
-                    return $body.find(this.selector).length > 0;
-                } else if (this.text) {
-                    return $body.find(`*:contains("${this.text}")`).length > 0;
-                }
-                return false;
-            }, { timeout, interval })
-            .then(() => {
-                if (this.selector) {
-                    const element = $body.find(this.selector);
-                    if (element && element.is(':visible')) {
-                        element.click(...args);
-                    }
-                } else if (this.text) {
-                    const element = $body.find(`*:contains("${this.text}")`);
-                    if (element && element.is(':visible')) {
-                        element.click(...args);
-                    }
+            cy.waitUntil(
+                () => Date.now() - startTime >= timeout || findVisible($body).length > 0,
+                { timeout: timeout + 1000, interval: 100 }
+            ).then(() => {
+                const $element = findVisible($body);
+                if ($element.length > 0) {
+                    cy.wrap($element).click(...args);
                 }
             });
         });
@@ -328,6 +322,18 @@ class BasicComponent {
         return this;
     }
 
+    /**
+     * Yields the component's element to a callback using Cypress .then().
+     * Escape hatch for accessing the raw element (e.g., reading text or attributes)
+     * without calling get() directly.
+     * @param {Function} callback - Callback receiving the JQuery-wrapped element.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    then(callback) {
+        this.get().then(callback);
+        return this;
+    }
+
     /** ASSERTION METHODS */
 
     /**
@@ -424,7 +430,7 @@ class BasicComponent {
     }
 
     /**
-     * Asserts that the component is empty (e.g., has no content).
+     * Asserts that the component is not empty (e.g., has content).
      * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
      */
     shouldNotBeEmpty() {
@@ -539,6 +545,49 @@ class BasicComponent {
      */
     shouldNotMatchSelector(selector) {
         this.should('not.match', selector);
+        return this;
+    }
+
+    /**
+     * Asserts that the component matches a specific number of elements.
+     * @param {number} count - The expected number of matched elements.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    shouldHaveCount(count) {
+        this.should('have.length', count);
+        return this;
+    }
+
+    /**
+     * Asserts that the component has a specific CSS property with an optional value.
+     * @param {string} property - The CSS property name to check for.
+     * @param {string} [value] - Optional CSS property value to compare against.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    shouldHaveCss(property, value) {
+        if (typeof value !== 'undefined') {
+            this.should('have.css', property, value);
+        } else {
+            this.should('have.css', property);
+        }
+        return this;
+    }
+
+    /**
+     * Asserts that the component is focused.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    shouldBeFocused() {
+        this.should('have.focus');
+        return this;
+    }
+
+    /**
+     * Asserts that the component is not focused.
+     * @returns {BasicComponent} This instance of BasicComponent for chaining calls.
+     */
+    shouldNotBeFocused() {
+        this.should('not.have.focus');
         return this;
     }
 }

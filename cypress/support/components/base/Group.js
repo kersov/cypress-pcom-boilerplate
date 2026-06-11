@@ -131,6 +131,16 @@ function Group(BaseClass) {
             return this._chain('find', ...args);
         }
 
+        /**
+         * Iterates over each element in the group using Cypress .each().
+         * @param {Function} callback - Callback receiving (element, index, collection) for each element.
+         * @returns {this} This instance for chaining calls.
+         */
+        each(callback) {
+            this.get().each(callback);
+            return this;
+        }
+
     };
 }
 

@@ -65,23 +65,22 @@ Before diving into running tests, it's helpful to understand the basic project s
 
 You can run tests using the npm scripts defined in `package.json`. These scripts follow the pattern `npm run test:e2e:<env>:<site>:<locale>:<device>`.
 
-Here are some examples based on the scripts currently available in `package.json`:
+In this boilerplate the configured scripts target the built-in self-test app (site `testapp`, see "Framework Self-Tests" below). The `test:e2e:*` scripts are pure Cypress runs — they assume the application under test is already running:
 
 ```bash
-# Run all tests for the 'main' site in the 'dev' environment and 'default' locale, across all defined devices
-npm run test:e2e:dev:main:default
+# Run all tests for the 'testapp' site in the 'dev' environment and 'default' locale, across all defined devices
+npm run test:e2e:dev:testapp:default
 
-# Run tests specifically on mobile for 'main' site, 'dev' environment, 'default' locale
-npm run test:e2e:dev:main:default:mobile
+# Run a specific device mode for an environment
+npm run test:e2e:dev:testapp:default:mobile
+npm run test:e2e:stg:testapp:default:tablet
+npm run test:e2e:prod:testapp:default:desktop
 
-# Run tests specifically on tablet for 'main' site, 'dev' environment, 'default' locale
-npm run test:e2e:dev:main:default:tablet
-
-# Run tests specifically on desktop for 'main' site, 'dev' environment, 'default' locale
-npm run test:e2e:dev:main:default:desktop
+# Run every environment and device combination
+npm run test:e2e:all
 ```
 
-To run tests with different configurations (e.g., other sites, environments, or locales), you would typically add new scripts to your `package.json` following a similar pattern, or run Cypress directly with specific environment variables. For example:
+To run tests with different configurations (e.g., other sites, environments, or locales), add new scripts to your `package.json` following the same pattern, or run Cypress directly with specific environment variables. For example:
 
 ```bash
 # Example of running Cypress directly for a hypothetical 'stg' environment and 'otherSite'
@@ -95,6 +94,35 @@ npx cypress open --env site=main,env=dev,locale=default,mode=desktop
 ```
 
 Refer to the `scripts` section in `package.json` for all currently configured test execution commands. You can customize or add new scripts to suit your project's needs.
+
+### Framework Self-Tests
+
+The repository ships with a small static test app (`test-app/`) and a suite of self-tests (`cypress/e2e/self-tests/`) that exercise every base component and page method against a real DOM. Use them to verify the framework after changing anything under `cypress/support/`.
+
+The app is served by a zero-dependency Node server in three "versions" — the same HTML source with `{{ENV}}`/`{{env}}` placeholders substituted per environment — configured as the `testapp` site via `<env>.testapp.url` entries in `cypress.env.json`:
+
+| Environment | Port | Base URL |
+|---|---|---|
+| dev | 3001 | `http://localhost:3001` |
+| stg | 3002 | `http://localhost:3002` |
+| prod | 3003 | `http://localhost:3003` |
+
+```bash
+# One-shot: start all three servers, run every env × device combination, shut down
+npm run start-and-test
+
+# Or start the servers yourself and run the pure test scripts:
+npm run app                  # all three in parallel (or app:dev / app:stg / app:prod)
+npm run test:e2e             # dev, all devices — assumes the server is running
+npm run test:e2e:all         # all envs × all devices
+
+# Interactive mode against the running dev app
+npx cypress open --env site=testapp,env=dev,locale=default,mode=desktop
+```
+
+The self-test suites are tagged `@self` and the `test:self:*` scripts run with `grepTags=@self`, so they stay isolated: tests from your own (untagged) specs are never executed by a self-test run, and the self-tests don't run in your regular runs unless you grep for `@self` yourself.
+
+The self-test page objects live in `cypress/support/pages/testapp/` and double as a working example of the PCOM pattern.
 
 ### Test Tagging
 
@@ -124,19 +152,19 @@ npx cypress run --env site=main,env=dev,locale=default,mode=desktop,grep=login
 
 ### Adding a New Site or Environment
 
-Base URLs are resolved in `cypress/support/utils/urlUtils.js` via the `urlMask` object, keyed by site and then environment:
+Base URLs are defined exclusively via environment variables — there are no URLs in the code. `cypress/support/utils/urlUtils.js` resolves the `url` variable through the hierarchical lookup (`env.site.locale.url` → `env.site.url` → `env.url` → `url`) and **throws an error if no URL is configured** for the requested combination.
 
-```js
-const urlMask = {
-  main: {
-    dev: `https://${username}:${password}@example.cypress.io`,
-    stg: `https://${username}:${password}@example.cypress.io`,
-    prod: `https://example.cypress.io`
-  }
-};
+To target your own application, add `url` entries for each site/environment to `cypress.env.json` (or supply them via `CYPRESS_*` system variables / `--env` CLI args):
+
+```json
+{
+  "dev.mysite.url": "https://user:password@dev.mysite.com",
+  "stg.mysite.url": "https://user:password@stg.mysite.com",
+  "prod.mysite.url": "https://mysite.com"
+}
 ```
 
-To target your own application, edit this map: add an entry for each site you test and each environment within it. The `username`/`password` interpolation supports environments behind HTTP basic auth — remove it for environments that don't need it. The `sandbox` environment is special: it skips the mask entirely and reads the base URL straight from the `url` environment variable (see below), which is handy for local or ad-hoc deployments:
+For environments behind HTTP basic auth, embed the credentials in the URL itself (`https://user:password@host`). For local or ad-hoc deployments, a plain `url` works as a catch-all fallback:
 
 ```bash
 npx cypress run --env env=sandbox,url=http://localhost:8080
@@ -183,6 +211,8 @@ Here's an example of how `cypress.env.json` might look:
   "retries": 2,
   "loadTimeout": 60000,
   "commandTimeout": 4000,
+  "dev.main.url": "https://user:password@example.cypress.io",
+  "prod.main.url": "https://example.cypress.io",
   "sandbox.url": "https://example.cypress.io"
 }
 ```
@@ -192,7 +222,7 @@ In this example:
 -   `retries`: Overrides the default number of retries for failed tests.
 -   `loadTimeout`: Customizes the page load timeout.
 -   `commandTimeout`: Adjusts the default command timeout.
--   `sandbox.url`: The base URL used when running with `env=sandbox` (resolved through the hierarchical lookup described above).
+-   `dev.main.url` / `prod.main.url` / `sandbox.url`: Base URLs per environment and site, resolved through the hierarchical lookup described above. A run fails immediately if no `url` matches the requested site/env/locale.
 
 Variables defined in `cypress.env.json` can be accessed in your tests using `Cypress.env('variable')`. For example, `Cypress.env('username')` would return `"user"`.
 
@@ -201,7 +231,7 @@ Variables defined in `cypress.env.json` can be accessed in your tests using `Cyp
 Below is a list of commonly used environment variables (which can also be set in `cypress.env.json` as shown above):
 
 *   **`site`**:
-    *   **Description**: Specifies the target site configuration. This allows different setups or base URLs for various application versions (e.g., 'main', 'clientXSite'). Must have a corresponding entry in `urlMask` (see "Adding a New Site or Environment").
+    *   **Description**: Specifies the target site configuration. This allows different setups or base URLs for various application versions (e.g., 'main', 'clientXSite'). Must have a matching `url` environment variable (see "Adding a New Site or Environment").
     *   **Default**: `'main'` (as set in `siteConfigUtils.js` if not otherwise provided).
     *   **Example**: `CYPRESS_site=clientA` or via CLI: `--env site=clientA`
 
@@ -221,16 +251,12 @@ Below is a list of commonly used environment variables (which can also be set in
     *   **Example**: `CYPRESS_mode=tablet` or via CLI in scripts: `--env mode=tablet`
 
 *   **`url`**:
-    *   **Description**: The explicit base URL for the application under test. Used when `env` is 'sandbox'. Can also be defined with higher precedence using the `env.site.locale.url` pattern (e.g., `dev.main.en.url`).
-    *   **Example**: `CYPRESS_url=http://localhost:8080` or in `cypress.env.json`: `{ "dev.mysite.url": "https://dev.mysite.com" }`
+    *   **Description**: The base URL for the application under test. **Required** — the run fails with an error if no `url` matches the requested site/env/locale. Scoped variants take precedence using the `env.site.locale.url` pattern (e.g., `dev.main.en.url` → `dev.main.url` → `dev.url` → `url`). Embed basic-auth credentials directly in the URL when needed.
+    *   **Example**: `CYPRESS_url=http://localhost:8080` or in `cypress.env.json`: `{ "dev.mysite.url": "https://user:password@dev.mysite.com" }`
 
-*   **`username`**:
-    *   **Description**: Username for HTTP basic authentication. Used by `urlUtils.js` to construct URLs for environments requiring authentication. Can be scoped by `env`, `site`, and `locale`.
+*   **`username`** / **`password`**:
+    *   **Description**: Test-account credentials for use in your specs (e.g., login forms). Can be scoped by `env`, `site`, and `locale` like any other variable. Not used for URL construction — basic-auth credentials belong in the `url` value itself.
     *   **Example**: `CYPRESS_username=testUser` or in `cypress.env.json`: `{ "dev.main.en.username": "user123" }`
-
-*   **`password`**:
-    *   **Description**: Password for HTTP basic authentication. Used similarly to `username` by `urlUtils.js` and can also be scoped.
-    *   **Example**: `CYPRESS_password=securePassword123` or in `cypress.env.json`: `{ "dev.main.en.password": "Password!" }`
 
 *   **`retries`**:
     *   **Description**: Sets the number of times Cypress will retry failed tests. This applies globally for both `runMode` (headless) and `openMode` (interactive).
@@ -286,8 +312,8 @@ All action and assertion methods return the component instance, so calls can be 
 
 -   **`BasicComponent`**:
     *   **Purpose**: The foundational class for all components. It handles element selection (selector, text, or callback), nested components, and basic UI actions.
-    *   **Key Methods**: `click()`, `clickIfVisible()`, `doubleClick()`, `rightClick()`, `focus()`, `blur()`, `scrollIntoView()`, `scrollTo()`, `type()`, `pressEnter()`, `pressSpace()`, `pressUpArrow()`, `pressDownArrow()`, `invoke()`, `trigger()`.
-    *   **Key Assertions**: `should()`, `and()`, `shouldBeVisible()`, `shouldNotBeVisible()`, `shouldExist()`, `shouldNotExist()`, `shouldBeEmpty()`, `shouldHaveText()`, `shouldContainText()`, `shouldHaveAttribute()`, `shouldHaveClass()`, `shouldMatchSelector()` (each with a `Not` counterpart).
+    *   **Key Methods**: `click()`, `clickIfVisible()`, `doubleClick()`, `rightClick()`, `focus()`, `blur()`, `scrollIntoView()`, `scrollTo()`, `type()`, `pressEnter()`, `pressSpace()`, `pressUpArrow()`, `pressDownArrow()`, `invoke()`, `trigger()`, `then()`.
+    *   **Key Assertions**: `should()`, `and()`, `shouldBeVisible()`, `shouldNotBeVisible()`, `shouldExist()`, `shouldNotExist()`, `shouldBeEmpty()`, `shouldHaveText()`, `shouldContainText()`, `shouldHaveAttribute()`, `shouldHaveClass()`, `shouldMatchSelector()` (each with a `Not` counterpart), `shouldHaveCount()`, `shouldHaveCss()`, `shouldBeFocused()` / `shouldNotBeFocused()`.
     *   **Example**:
         ```javascript
         const BasicComponent = require('./cypress/support/components/base/BasicComponent');
@@ -400,15 +426,19 @@ All action and assertion methods return the component instance, so calls can be 
 
 -   **`Link`**:
     *   **Purpose**: Extends `BasicComponent`. Represents anchor elements.
-    *   **Key Methods**: `visitURL()`, `openInNewTab()`.
+    *   **Key Methods**: `visitURL()`, `removeTarget()` (removes the `target` attribute so links with `target="_blank"` open in the same tab, since Cypress cannot follow new tabs).
     *   **Key Assertions**: `shouldHaveHref()`, `shouldNotHaveHref()`, `shouldBeExternalLink()`, `shouldBeInternalLink()`.
 
--   **`Image`**, **`Label`**, **`List`**, **`ListItem`**, **`Modal`**:
+-   **`Image`**:
+    *   **Purpose**: Extends `BasicComponent`. Represents `<img>` elements.
+    *   **Key Assertions**: `shouldHaveSource()`, `shouldHaveAlt()`, `shouldBeLoaded()` (asserts `naturalWidth > 0`, catching broken images).
+
+-   **`Label`**, **`List`**, **`ListItem`**, **`Modal`**:
     *   **Purpose**: Semantic subclasses of `BasicComponent` for the corresponding HTML elements. They inherit all `BasicComponent` behavior and serve as extension points for custom components.
 
 ### Group Mixin
 
-`Group` (`cypress/support/components/base/Group.js`) is a **mixin function**, not a class. Apply it to any component class to manage a collection of matching elements with group-level operations such as `filter()`, `not()`, `eq()`, `first()`, `last()`, `contains()`, and `find()`:
+`Group` (`cypress/support/components/base/Group.js`) is a **mixin function**, not a class. Apply it to any component class to manage a collection of matching elements with group-level operations such as `filter()`, `not()`, `eq()`, `first()`, `last()`, `contains()`, `find()`, and `each()`:
 
 ```js
 const Group = require('./cypress/support/components/base/Group');

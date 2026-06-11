@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>PCOM Test App ({{ENV}})</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        section { margin-bottom: 16px; }
+        .hidden { display: none; }
+        #modal {
+            display: none; position: fixed; top: 20%; left: 30%;
+            background: #fff; border: 1px solid #333; padding: 20px;
+        }
+        #tall-section { height: 2000px; background: linear-gradient(#eee, #ccc); }
+        #hover-box { width: 120px; border: 1px solid #999; padding: 4px; }
+    </style>
+</head>
+<body>
+    <h1 id="page-title">PCOM Test App</h1>
+    <p id="env-banner" data-env="{{env}}">{{ENV}}</p>
+    <p id="message" class="info" data-role="greeting" style="color: rgb(0, 128, 0);">Welcome to the test app</p>
+    <p id="empty-element"></p>
+
+    <section id="buttons">
+        <button id="action-btn" type="button">Click me</button>
+        <span id="click-count">0</span>
+        <span id="last-event">none</span>
+        <button id="disabled-btn" type="button" disabled>Disabled</button>
+        <span id="disabled-btn-result">untouched</span>
+        <button id="delayed-btn" type="button" class="hidden">Delayed</button>
+        <span id="delayed-result">pending</span>
+        <div id="cookie-banner"><button id="cookie-btn" type="button">Accept Cookies</button></div>
+        <div id="hover-box">idle</div>
+    </section>
+
+    <section id="keyboard">
+        <input id="key-input" type="text">
+        <span id="last-key">none</span>
+        <input id="focus-input" type="text">
+    </section>
+
+    <form id="test-form" action="/submit">
+        <label for="name-input">Your name</label>
+        <input id="name-input" name="name" type="text" required minlength="2" maxlength="10">
+        <input id="email-input" name="email" type="email">
+        <input id="readonly-input" type="text" readonly value="locked">
+        <input id="terms-checkbox" name="terms" type="checkbox" value="yes">
+        <label for="terms-checkbox">Accept terms</label>
+        <input class="color-radio" id="radio-red" name="color" type="radio" value="red">
+        <input class="color-radio" id="radio-green" name="color" type="radio" value="green">
+        <input class="color-radio" id="radio-blue" name="color" type="radio" value="blue">
+        <select id="country-select" name="country">
+            <option value="">--</option>
+            <option value="US">United States</option>
+            <option value="UA">Ukraine</option>
+            <option value="DE">Germany</option>
+        </select>
+        <select id="fruits-select" name="fruits" multiple>
+            <option value="apple">Apple</option>
+            <option value="banana">Banana</option>
+            <option value="cherry">Cherry</option>
+        </select>
+        <textarea id="comment-textarea" name="comment"></textarea>
+        <button id="submit-btn" type="submit">Submit</button>
+        <span id="form-result">not submitted</span>
+    </form>
+
+    <ul id="todo-list">
+        <li class="item">Buy milk <span class="badge">low</span></li>
+        <li class="item done">Pay bills <span class="badge">high</span></li>
+        <li class="item">Walk the dog <span class="badge">mid</span></li>
+    </ul>
+
+    <section id="links">
+        <a id="internal-link" href="/second.html">Go to second page</a>
+        <a id="external-link" href="https://example.com/docs">External docs</a>
+        <a id="blank-link" href="/second.html" target="_blank">Open second in new tab</a>
+    </section>
+
+    <img id="logo-img" src="/logo.png" alt="PCOM logo" width="32" height="32">
+
+    <button id="open-modal-btn" type="button">Open modal</button>
+    <div id="modal">
+        <p>Modal content</p>
+        <button id="close-modal-btn" type="button">Close</button>
+    </div>
+
+    <div id="tall-section"></div>
+    <p id="bottom-marker">You reached the bottom</p>
+
+    <script>
+        const $id = (id) => document.getElementById(id);
+        let clicks = 0;
+        $id('action-btn').addEventListener('click', () => {
+            clicks += 1;
+            $id('click-count').textContent = clicks;
+            $id('last-event').textContent = 'click';
+        });
+        $id('action-btn').addEventListener('dblclick', () => {
+            $id('last-event').textContent = 'dblclick';
+        });
+        $id('action-btn').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            $id('last-event').textContent = 'contextmenu';
+        });
+        $id('disabled-btn').addEventListener('click', () => {
+            $id('disabled-btn-result').textContent = 'clicked';
+        });
+        setTimeout(() => $id('delayed-btn').classList.remove('hidden'), 1000);
+        $id('delayed-btn').addEventListener('click', () => {
+            $id('delayed-result').textContent = 'clicked';
+        });
+        $id('cookie-btn').addEventListener('click', () => {
+            $id('cookie-banner').classList.add('hidden');
+        });
+        $id('hover-box').addEventListener('mouseover', function () {
+            this.textContent = 'hovered';
+        });
+        $id('key-input').addEventListener('keydown', (e) => {
+            $id('last-key').textContent = e.key === ' ' ? 'Space' : e.key;
+        });
+        $id('test-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            $id('form-result').textContent = 'submitted';
+        });
+        $id('open-modal-btn').addEventListener('click', () => {
+            $id('modal').style.display = 'block';
+        });
+        $id('close-modal-btn').addEventListener('click', () => {
+            $id('modal').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

@@ -5,4 +5,4 @@ class Checkbox extends Input {
 
 }
 
-module.exports = Input;
+module.exports = Checkbox;

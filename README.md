@@ -10,9 +10,6 @@ This repository serves as a foundational Cypress boilerplate project designed to
 - **Test Tagging**: Organize and execute tests efficiently using tags.
 
 ## Getting Started
-This section guides you through setting up the project on your local machine.
-
-## How to Install
 
 1.  **Clone the repository:**
     ```bash
@@ -36,24 +33,24 @@ Before diving into running tests, it's helpful to understand the basic project s
 
 -   `cypress/`: Contains all Cypress-related files.
     -   `e2e/`: Your test files (specs) go here.
-    -   `fixtures/`: Test data (e.g., JSON files) used in your tests.
-    -   `support/`: Reusable custom commands, PCOM setup, and utilities.
+    -   `fixtures/`: (Create as needed) Test data (e.g., JSON files) used in your tests.
+    -   `support/`: Reusable PCOM setup and utilities.
         -   `components/`: Base and custom UI component classes.
             -   `base/`: The core set of generic component classes provided by this boilerplate.
             -   `custom/`: (Create this directory for your project-specific components that extend base components).
         -   `pages/`: Page Object classes.
-        -   `utils/`: Utility functions.
-        -   `commands.js`: Custom Cypress commands.
-        -   `e2e.js`: Main support file, loaded before each spec file.
-        -   `pages.js`: Central registration for Page Objects.
-        -   `components.js`: Central registration/export for globally accessible components (optional).
+            -   `base/`: Contains `BasicPage`, the base class for all Page Objects.
+        -   `utils/`: Utility functions (environment variables, URLs, devices, site config).
+        -   `e2e.js`: Main support file, loaded before each spec file. Registers `@cypress/grep`, `cypress-wait-until`, and loads `pages.js`.
+        -   `pages.js`: Central registration for Page Objects (loads `components.js`).
+        -   `components.js`: Central registration for globally accessible components.
 -   `cypress.config.js`: Cypress configuration file.
 -   `package.json`: Project metadata, dependencies, and npm scripts.
 
 ### Writing Tests
 
 1.  **Create Page Objects**:
-    *   For each page in your application, create a corresponding Page Object class in `cypress/support/pages/*/`.
+    *   For each page in your application, create a corresponding Page Object class in `cypress/support/pages/*/`, extending `BasicPage`.
     *   In each Page Object, instantiate the components present on that page using the base components or your custom components.
 
 2.  **Define Components**:
@@ -66,42 +63,138 @@ Before diving into running tests, it's helpful to understand the basic project s
 
 ### Running Tests
 
-You can run tests using the npm scripts defined in `package.json`. These scripts often follow a pattern like `npm run test:e2e:<env>:<site>:<locale>:<device>`.
+You can run tests using the npm scripts defined in `package.json`. These scripts follow the pattern `npm run test:e2e:<env>:<site>:<locale>:<device>`.
 
-Here are some examples based on the scripts currently available in `package.json`:
+In this boilerplate the configured scripts target the built-in self-test app (site `testapp`, see "Framework Self-Tests" below). The `test:e2e:*` scripts are pure Cypress runs — they assume the application under test is already running:
 
 ```bash
-# Run all tests for the 'main' site in the 'dev' environment and 'default' locale, across all defined devices
-npm run test:e2e:dev:main:default
+# Run all tests for the 'testapp' site in the 'dev' environment and 'default' locale, across all defined devices
+npm run test:e2e:dev:testapp:default
 
-# Run tests specifically on mobile for 'main' site, 'dev' environment, 'default' locale
-npm run test:e2e:dev:main:default:mobile
+# Run a specific device mode for an environment
+npm run test:e2e:dev:testapp:default:mobile
+npm run test:e2e:stg:testapp:default:tablet
+npm run test:e2e:prod:testapp:default:desktop
 
-# Run tests specifically on tablet for 'main' site, 'dev' environment, 'default' locale
-npm run test:e2e:dev:main:default:tablet
-
-# Run tests specifically on desktop for 'main' site, 'dev' environment, 'default' locale
-npm run test:e2e:dev:main:default:desktop
+# Run every environment and device combination
+npm run test:e2e:all
 ```
 
-To run tests with different configurations (e.g., other sites, environments, or locales), you would typically add new scripts to your `package.json` following a similar pattern, or run Cypress directly with specific environment variables. For example:
+To run tests with different configurations (e.g., other sites, environments, or locales), add new scripts to your `package.json` following the same pattern, or run Cypress directly with specific environment variables. For example:
 
 ```bash
 # Example of running Cypress directly for a hypothetical 'stg' environment and 'otherSite'
 npx cypress run --env site=otherSite,env=stg,locale=en,mode=desktop
+
+# Run a single spec file
+npx cypress run --env site=main,env=dev,locale=default,mode=desktop --spec cypress/e2e/login.cy.js
+
+# Open the interactive Cypress runner
+npx cypress open --env site=main,env=dev,locale=default,mode=desktop
 ```
 
 Refer to the `scripts` section in `package.json` for all currently configured test execution commands. You can customize or add new scripts to suit your project's needs.
+
+### Framework Self-Tests
+
+The repository ships with a small static test app (`test-app/`) and a suite of self-tests (`cypress/e2e/self-tests/`) that exercise every base component and page method against a real DOM. Use them to verify the framework after changing anything under `cypress/support/`.
+
+The app is served by a zero-dependency Node server in three "versions" — the same HTML source with `{{ENV}}`/`{{env}}` placeholders substituted per environment — configured as the `testapp` site via `<env>.testapp.url` entries in `cypress.env.json`:
+
+| Environment | Port | Base URL |
+|---|---|---|
+| dev | 3001 | `http://localhost:3001` |
+| stg | 3002 | `http://localhost:3002` |
+| prod | 3003 | `http://localhost:3003` |
+
+```bash
+# One-shot: start all three servers, run every env × device combination, shut down
+npm run start-and-test
+
+# Or start the servers yourself and run the pure test scripts:
+npm run app                  # all three in parallel (or app:dev / app:stg / app:prod)
+npm run test:e2e             # dev, all devices — assumes the server is running
+npm run test:e2e:all         # all envs × all devices
+
+# Interactive mode against the running dev app
+npx cypress open --env site=testapp,env=dev,locale=default,mode=desktop
+```
+
+The self-test suites are tagged `@self` and the `test:self:*` scripts run with `grepTags=@self`, so they stay isolated: tests from your own (untagged) specs are never executed by a self-test run, and the self-tests don't run in your regular runs unless you grep for `@self` yourself.
+
+The self-test page objects live in `cypress/support/pages/testapp/` and double as a working example of the PCOM pattern.
+
+### Test Tagging
+
+The boilerplate registers [@cypress/grep](https://github.com/cypress-io/cypress/tree/develop/npm/grep), so you can tag tests and run subsets of your suite.
+
+Tag a test (or suite) via the `tags` config option:
+
+```js
+it('logs in successfully', { tags: '@smoke' }, () => {
+    // ...
+});
+
+describe('checkout', { tags: ['@regression', '@checkout'] }, () => {
+    // ...
+});
+```
+
+Run only matching tests by passing grep variables alongside the usual ones:
+
+```bash
+# Run tests tagged @smoke
+npx cypress run --env site=main,env=dev,locale=default,mode=desktop,grepTags=@smoke
+
+# Run tests whose title contains "login"
+npx cypress run --env site=main,env=dev,locale=default,mode=desktop,grep=login
+```
+
+### Adding a New Site or Environment
+
+Base URLs are defined exclusively via environment variables — there are no URLs in the code. `cypress/support/utils/urlUtils.js` resolves the `url` variable through the hierarchical lookup (`env.site.locale.url` → `env.site.url` → `env.url` → `url`) and **throws an error if no URL is configured** for the requested combination.
+
+To target your own application, add `url` entries for each site/environment to `cypress.env.json` (or supply them via `CYPRESS_*` system variables / `--env` CLI args):
+
+```json
+{
+  "dev.mysite.url": "https://user:password@dev.mysite.com",
+  "stg.mysite.url": "https://user:password@stg.mysite.com",
+  "prod.mysite.url": "https://mysite.com"
+}
+```
+
+For environments behind HTTP basic auth, embed the credentials in the URL itself (`https://user:password@host`). For local or ad-hoc deployments, a plain `url` works as a catch-all fallback:
+
+```bash
+npx cypress run --env env=sandbox,url=http://localhost:8080
+```
 
 ### Page Component Object Model (PCOM)
 
 PCOM is a design pattern that encourages the creation of reusable and maintainable test code. It involves breaking down web pages into components, and then creating objects that represent these components. This boilerplate provides base component classes (see "Base Components" section below) that you can extend to create your own custom components.
 
+**Key ideas:**
+-   **Pages:** Represent entire pages in your application (e.g., LoginPage, HomePage). They are responsible for providing access to the components on that page.
+-   **Components:** Represent individual UI elements or groups of elements (e.g., a login form, a navigation menu, a button). They encapsulate the logic for interacting with those elements.
+
+This structure helps to:
+-   **Reduce code duplication:** Common UI elements can be defined once and reused across multiple tests.
+-   **Improve maintainability:** If the UI changes, you only need to update the corresponding component object, rather than every test that interacts with that element.
+-   **Increase readability:** Tests become easier to understand as they interact with higher-level abstractions (page and component objects) rather than raw selectors.
+
 ## Environment Variables
 
-This project utilizes several environment variables to configure test runs, manage credentials, and define target environments. These variables can be set via system environment variables (e.g., `CYPRESS_VARIABLE_NAME=value`), in a `cypress.env.json` file, or passed via command-line arguments (`--env VARIABLE_NAME=value`).
+This project utilizes several environment variables to configure test runs, manage credentials, and define target environments. These variables can be set via system environment variables (e.g., `CYPRESS_variable=value`), in a `cypress.env.json` file, or passed via command-line arguments (`--env variable=value`).
 
-The `envUtils.js` utility allows for a hierarchical lookup for some variables (like `URL`, `USERNAME`, `PASSWORD`), meaning you can define general variables and override them with more specific ones using a pattern like `ENV.SITE.LOCALE.VARIABLE_NAME` (e.g., `dev.main.en.username`).
+**Note on casing:** the variable names are case-sensitive and lowercase/camelCase (`site`, `env`, `loadTimeout`, ...), matching how they are read in `cypress/support/utils/`. When using system environment variables, keep the part after the `CYPRESS_` prefix in the same case (e.g., `CYPRESS_site=clientA`, `CYPRESS_loadTimeout=100000`).
+
+The `envUtils.js` utility allows for a hierarchical lookup for some variables (like `url`, `username`, `password`), meaning you can define general variables and override them with more specific ones using a pattern like `env.site.locale.variable` (e.g., `dev.main.en.username`). Lookup order, most specific first:
+
+1. `env.site.locale.variable` (e.g., `dev.main.en.username`)
+2. `env.site.variable` (e.g., `dev.main.username`)
+3. `env.variable` (e.g., `dev.username`)
+4. `variable` (e.g., `username`)
 
 ### Using `cypress.env.json`
 
@@ -118,6 +211,8 @@ Here's an example of how `cypress.env.json` might look:
   "retries": 2,
   "loadTimeout": 60000,
   "commandTimeout": 4000,
+  "dev.main.url": "https://user:password@example.cypress.io",
+  "prod.main.url": "https://example.cypress.io",
   "sandbox.url": "https://example.cypress.io"
 }
 ```
@@ -127,79 +222,98 @@ In this example:
 -   `retries`: Overrides the default number of retries for failed tests.
 -   `loadTimeout`: Customizes the page load timeout.
 -   `commandTimeout`: Adjusts the default command timeout.
--   `sandbox.url`: Defines a specific URL for a "sandbox" environment, which could be accessed in tests via `Cypress.env('sandbox.url')`.
+-   `dev.main.url` / `prod.main.url` / `sandbox.url`: Base URLs per environment and site, resolved through the hierarchical lookup described above. A run fails immediately if no `url` matches the requested site/env/locale.
 
-Variables defined in `cypress.env.json` can be accessed in your tests using `Cypress.env('VARIABLE_NAME')`. For example, `Cypress.env('username')` would return `"user"`.
+Variables defined in `cypress.env.json` can be accessed in your tests using `Cypress.env('variable')`. For example, `Cypress.env('username')` would return `"user"`.
 
 ### Commonly Used Environment Variables
 
 Below is a list of commonly used environment variables (which can also be set in `cypress.env.json` as shown above):
 
-*   **`SITE`**:
-    *   **Description**: Specifies the target site configuration. This allows different setups or base URLs for various application versions (e.g., 'main', 'clientXSite').
+*   **`site`**:
+    *   **Description**: Specifies the target site configuration. This allows different setups or base URLs for various application versions (e.g., 'main', 'clientXSite'). Must have a matching `url` environment variable (see "Adding a New Site or Environment").
     *   **Default**: `'main'` (as set in `siteConfigUtils.js` if not otherwise provided).
-    *   **Example**: `CYPRESS_SITE=clientA` or in `cypress.env.json`: `{ "SITE": "clientA" }`
+    *   **Example**: `CYPRESS_site=clientA` or via CLI: `--env site=clientA`
 
-*   **`ENV`**:
+*   **`env`**:
     *   **Description**: Defines the testing environment (e.g., 'dev', 'stg', 'prod', 'sandbox'). This directs tests to the correct deployment and applies environment-specific settings.
     *   **Default**: `'dev'` (as set in `siteConfigUtils.js` if not otherwise provided).
-    *   **Example**: `CYPRESS_ENV=stg` or via CLI: `--env ENV=stg`
+    *   **Example**: `CYPRESS_env=stg` or via CLI: `--env env=stg`
 
-*   **`LOCALE`**:
+*   **`locale`**:
     *   **Description**: Specifies the locale or language for tests (e.g., 'en-US', 'es-MX', 'default'). Essential for applications with internationalization.
     *   **Default**: `'default'` (as set in `siteConfigUtils.js` if not otherwise provided).
-    *   **Example**: `CYPRESS_LOCALE=fr-CA` or in `cypress.env.json`: `{ "LOCALE": "fr-CA" }`
+    *   **Example**: `CYPRESS_locale=fr-CA` or in `cypress.env.json`: `{ "locale": "fr-CA" }`
 
-*   **`MODE`**:
-    *   **Description**: Defines the device mode or viewport for testing, used to simulate screen sizes like 'mobile', 'tablet', or 'desktop'. This is often used by the test execution scripts in `package.json`.
-    *   **Example**: `CYPRESS_MODE=tablet` or via CLI in scripts: `--env mode=tablet`
+*   **`mode`**:
+    *   **Description**: Defines the device mode or viewport for testing: 'mobile' (360×800), 'tablet' (768×1024), or 'desktop' (1920×1080). Used by the test execution scripts in `package.json`; tests can branch on it via `isMobile()`/`isTablet()`/`isDesktop()` from `deviceUtils.js`.
+    *   **Default**: `'desktop'` (as set in `deviceUtils.js` if not otherwise provided).
+    *   **Example**: `CYPRESS_mode=tablet` or via CLI in scripts: `--env mode=tablet`
 
-*   **`URL`**:
-    *   **Description**: The explicit base URL for the application under test. Especially used when `ENV` is 'sandbox'. Can also be defined with higher precedence using the `ENV.SITE.LOCALE.url` pattern (e.g., `dev.main.en.url`).
-    *   **Example**: `CYPRESS_URL=http://localhost:8080` or in `cypress.env.json`: `{ "dev.mysite.url": "https://dev.mysite.com" }`
+*   **`url`**:
+    *   **Description**: The base URL for the application under test. **Required** — the run fails with an error if no `url` matches the requested site/env/locale. Scoped variants take precedence using the `env.site.locale.url` pattern (e.g., `dev.main.en.url` → `dev.main.url` → `dev.url` → `url`). Embed basic-auth credentials directly in the URL when needed.
+    *   **Example**: `CYPRESS_url=http://localhost:8080` or in `cypress.env.json`: `{ "dev.mysite.url": "https://user:password@dev.mysite.com" }`
 
-*   **`USERNAME`**:
-    *   **Description**: Username for basic authentication or application login. Used by `urlUtils.js` to construct URLs for environments requiring authentication. Can be scoped by `ENV`, `SITE`, and `LOCALE`.
-    *   **Example**: `CYPRESS_USERNAME=testUser` or in `cypress.env.json`: `{ "dev.main.en.username": "user123" }`
+*   **`username`** / **`password`**:
+    *   **Description**: Test-account credentials for use in your specs (e.g., login forms). Can be scoped by `env`, `site`, and `locale` like any other variable. Not used for URL construction — basic-auth credentials belong in the `url` value itself.
+    *   **Example**: `CYPRESS_username=testUser` or in `cypress.env.json`: `{ "dev.main.en.username": "user123" }`
 
-*   **`PASSWORD`**:
-    *   **Description**: Password for basic authentication or application login. Used similarly to `USERNAME` by `urlUtils.js` and can also be scoped.
-    *   **Example**: `CYPRESS_PASSWORD=securePassword123` or in `cypress.env.json`: `{ "dev.main.en.password": "Password!" }`
-
-*   **`RETRIES`**:
+*   **`retries`**:
     *   **Description**: Sets the number of times Cypress will retry failed tests. This applies globally for both `runMode` (headless) and `openMode` (interactive).
     *   **Default**: `0` (as set in `siteConfigUtils.js` if not otherwise provided).
-    *   **Example**: `CYPRESS_RETRIES=1` or in `cypress.env.json`: `{ "retries": 1 }`
+    *   **Example**: `CYPRESS_retries=1` or in `cypress.env.json`: `{ "retries": 1 }`
 
-*   **`LOAD_TIMEOUT`**:
+*   **`loadTimeout`**:
     *   **Description**: The time (in milliseconds) Cypress waits for a page to fire its `load` event before timing out.
     *   **Default**: `60000` (60 seconds, as set in `siteConfigUtils.js` if not otherwise provided).
-    *   **Example**: `CYPRESS_LOAD_TIMEOUT=100000` or in `cypress.env.json`: `{ "loadTimeout": 100000 }`
+    *   **Example**: `CYPRESS_loadTimeout=100000` or in `cypress.env.json`: `{ "loadTimeout": 100000 }`
 
-*   **`COMMAND_TIMEOUT`**:
+*   **`commandTimeout`**:
     *   **Description**: The default time (in milliseconds) Cypress waits for most commands (e.g., `cy.get()`, `cy.click()`) to complete before timing out.
     *   **Default**: `4000` (4 seconds, as set in `siteConfigUtils.js` if not otherwise provided).
-    *   **Example**: `CYPRESS_COMMAND_TIMEOUT=8000` or in `cypress.env.json`: `{ "commandTimeout": 8000 }`
-
-**Key ideas:**
--   **Pages:** Represent entire pages in your application (e.g., LoginPage, HomePage). They are responsible for providing access to the components on that page.
--   **Components:** Represent individual UI elements or groups of elements (e.g., a login form, a navigation menu, a button). They encapsulate the logic for interacting with those elements.
-
-This structure helps to:
--   **Reduce code duplication:** Common UI elements can be defined once and reused across multiple tests.
--   **Improve maintainability:** If the UI changes, you only need to update the corresponding component object, rather than every test that interacts with that element.
--   **Increase readability:** Tests become easier to understand as they interact with higher-level abstractions (page and component objects) rather than raw selectors.
+    *   **Example**: `CYPRESS_commandTimeout=8000` or in `cypress.env.json`: `{ "commandTimeout": 8000 }`
 
 ## Base Components
 
 The boilerplate provides a set of reusable base component classes to model and interact with UI elements in a structured way. These components are located in `cypress/support/components/base/`.
 
-Here's a breakdown of each base component:
+### Inheritance Tree
+
+```
+BasicComponent
+├── Image, Label, Link, List, ListItem, Modal
+└── InteractiveComponent
+    ├── Button, Form
+    └── TypeableComponent
+        ├── TextArea
+        └── Input
+            ├── Checkbox, Radio
+            └── Select
+                └── MultiSelect
+
+Group — a mixin, not a class (see "Group Mixin" below)
+```
+
+### Constructing Components
+
+Every component takes a unique id and a locator:
+
+```js
+new Button('loginButton', '#login');                          // selector string
+new Button('loginButton', { text: 'Log in' });                // located via cy.contains()
+new Button('loginButton', () => cy.get('form').find('button')); // callback returning a chainable
+```
+
+When more than one locator is provided in an options object (`{selector, text, callback}`), resolution priority is: callback → selector → text.
+
+All action and assertion methods return the component instance, so calls can be chained. Components can also contain other components via `addNestedComponent()` / `getNestedComponents()`.
+
+### Component Reference
 
 -   **`BasicComponent`**:
-    *   **Purpose**: The foundational class for all components. It handles common functionalities like element selection (using selectors or callback functions), text retrieval, interaction with nested components, and basic UI actions.
-    *   **Key Methods**: `click()`, `doubleClick()`, `rightClick()`, `focus()`, `blur()`, `hover()`, `scrollIntoView()`, `pressEnter()`, `pressEscape()`, etc.
-    *   **Key Assertions**: `shouldBeVisible()`, `shouldNotExist()`, `shouldBeEmpty()`, `shouldHaveText()`, `shouldHaveAttr()`, `shouldHaveClass()`, etc.
+    *   **Purpose**: The foundational class for all components. It handles element selection (selector, text, or callback), nested components, and basic UI actions.
+    *   **Key Methods**: `click()`, `clickIfVisible()`, `doubleClick()`, `rightClick()`, `focus()`, `blur()`, `scrollIntoView()`, `scrollTo()`, `type()`, `pressEnter()`, `pressSpace()`, `pressUpArrow()`, `pressDownArrow()`, `invoke()`, `trigger()`, `then()`.
+    *   **Key Assertions**: `should()`, `and()`, `shouldBeVisible()`, `shouldNotBeVisible()`, `shouldExist()`, `shouldNotExist()`, `shouldBeEmpty()`, `shouldHaveText()`, `shouldContainText()`, `shouldHaveAttribute()`, `shouldHaveClass()`, `shouldMatchSelector()` (each with a `Not` counterpart), `shouldHaveCount()`, `shouldHaveCss()`, `shouldBeFocused()` / `shouldNotBeFocused()`.
     *   **Example**:
         ```javascript
         const BasicComponent = require('./cypress/support/components/base/BasicComponent');
@@ -210,9 +324,9 @@ Here's a breakdown of each base component:
         ```
 
 -   **`InteractiveComponent`**:
-    *   **Purpose**: Extends `BasicComponent`. It's designed for elements that users can interact with, adding capabilities to check if a component is enabled or disabled.
-    *   **Key Methods**: Inherits all from `BasicComponent`.
-    *   **Key Assertions**: `shouldBeEnabled()`, `shouldBeDisabled()`, `shouldHaveValue()`.
+    *   **Purpose**: Extends `BasicComponent`. It's designed for elements that users can interact with, adding enable/disable handling and value assertions.
+    *   **Key Methods**: `enable()`, `disable()`. Inherits others.
+    *   **Key Assertions**: `shouldBeEnabled()`, `shouldBeDisabled()`, `shouldHaveValue()`, `shouldNotHaveValue()`.
     *   **Example**:
         ```javascript
         const InteractiveComponent = require('./cypress/support/components/base/InteractiveComponent');
@@ -223,9 +337,9 @@ Here's a breakdown of each base component:
         ```
 
 -   **`TypeableComponent`**:
-    *   **Purpose**: Extends `InteractiveComponent`. This component is for elements that accept text input, like input fields and text areas. It provides methods for typing, clearing content, and asserting values.
-    *   **Key Methods**: `type()`, `clear()`. Inherits others.
-    *   **Key Assertions**: `shouldHaveValue()`, `shouldHaveLength()`. Inherits others.
+    *   **Purpose**: Extends `InteractiveComponent`. This component is for elements that accept text input, like input fields and text areas.
+    *   **Key Methods**: `clear()`. Inherits `type()` and others.
+    *   **Key Assertions**: `shouldHaveMinLength()`, `shouldHaveMaxLength()`, `shouldBeReadonly()`, `shouldBeRequired()`. Inherits `shouldHaveValue()` and others.
     *   **Example**:
         ```javascript
         const TypeableComponent = require('./cypress/support/components/base/TypeableComponent');
@@ -237,9 +351,9 @@ Here's a breakdown of each base component:
         ```
 
 -   **`Input`**:
-    *   **Purpose**: Extends `TypeableComponent`. Specifically designed for various HTML `<input>` elements. It adds specialized methods for checkboxes and radio buttons, and assertions for input types.
-    *   **Key Methods**: `check()`, `uncheck()`, `toggle()`. Inherits others.
-    *   **Key Assertions**: `shouldBeChecked()`, `shouldNotBeChecked()`, `shouldHaveType()`. Inherits others.
+    *   **Purpose**: Extends `TypeableComponent`. Specifically designed for HTML `<input>` elements. It adds specialized methods for checkboxes and radio buttons, input type assertions, and label association.
+    *   **Key Methods**: `check()`, `uncheck()`, `toggle()`, `addLabel()`, `getLabel()`. Inherits others.
+    *   **Key Assertions**: `shouldBeChecked()`, `shouldNotBeChecked()`, `shouldAcceptType()`. Inherits others.
     *   **Example**:
         ```javascript
         const Input = require('./cypress/support/components/base/Input');
@@ -247,7 +361,7 @@ Here's a breakdown of each base component:
         const termsCheckbox = new Input('termsCheckbox', '#terms-and-conditions');
 
         emailInput.type('test@example.com').shouldHaveValue('test@example.com');
-        emailInput.shouldHaveType('email');
+        emailInput.shouldAcceptType('email');
 
         termsCheckbox.check().shouldBeChecked();
         termsCheckbox.uncheck().shouldNotBeChecked();
@@ -255,8 +369,7 @@ Here's a breakdown of each base component:
 
 -   **`Button`**:
     *   **Purpose**: Extends `InteractiveComponent`. Represents clickable button elements.
-    *   **Key Methods**: Inherits all from `InteractiveComponent` (e.g., `click()`).
-    *   **Key Assertions**: Inherits all from `InteractiveComponent` (e.g., `shouldBeEnabled()`).
+    *   **Key Methods / Assertions**: Inherits all from `InteractiveComponent` (e.g., `click()`, `shouldBeEnabled()`).
     *   **Example**:
         ```javascript
         const Button = require('./cypress/support/components/base/Button');
@@ -266,10 +379,12 @@ Here's a breakdown of each base component:
         loginButton.click();
         ```
 
--   **`Checkbox`**:
-    *   **Purpose**: Extends `Input`. Tailored for checkbox inputs, inheriting all `Input` methods and providing convenience for checkbox-specific interactions.
-    *   **Key Methods**: Inherits `check()`, `uncheck()`, `toggle()` from `Input`.
-    *   **Key Assertions**: Inherits `shouldBeChecked()`, `shouldNotBeChecked()` from `Input`.
+-   **`Form`**:
+    *   **Purpose**: Extends `InteractiveComponent`. Represents a `<form>` element.
+    *   **Key Methods**: `submit()`. Inherits others.
+
+-   **`Checkbox`** / **`Radio`**:
+    *   **Purpose**: Extend `Input`. Semantic classes for checkbox and radio inputs, inheriting all `Input` methods.
     *   **Example**:
         ```javascript
         const Checkbox = require('./cypress/support/components/base/Checkbox');
@@ -280,23 +395,26 @@ Here's a breakdown of each base component:
         ```
 
 -   **`Select`**:
-    *   **Purpose**: Extends `Input`. Designed for `<select>` dropdown elements. It adds methods for selecting options by value or text and asserting available options.
-    *   **Key Methods**: `selectOptionByValue()`, `selectOptionByText()`. Inherits others.
-    *   **Key Assertions**: `shouldHaveOption()`, `shouldHaveSelectedOption()`. Inherits others.
+    *   **Purpose**: Extends `Input`. Designed for `<select>` dropdown elements.
+    *   **Key Methods**: `selectOption(value)`. Inherits others.
+    *   **Key Assertions**: `shouldHaveOption(text)`. Inherits others.
     *   **Example**:
         ```javascript
         const Select = require('./cypress/support/components/base/Select');
         const countryDropdown = new Select('countryDropdown', '#country-select');
 
-        countryDropdown.selectOptionByValue('US');
-        countryDropdown.shouldHaveSelectedOption('United States');
-        countryDropdown.shouldHaveOption('Canada');
+        countryDropdown.selectOption('US');
+        countryDropdown.shouldHaveOption('United States');
         ```
+
+-   **`MultiSelect`**:
+    *   **Purpose**: Extends `Select`. For `<select multiple>` elements.
+    *   **Key Methods**: `selectOptions(values)`, `deselectAll()`. Inherits others.
+    *   **Key Assertions**: `shouldHaveSelectedValues()`, `shouldIncludeSelectedValue()`. Inherits others.
 
 -   **`TextArea`**:
     *   **Purpose**: Extends `TypeableComponent`. Represents multi-line text input areas (`<textarea>`).
-    *   **Key Methods**: Inherits `type()`, `clear()` from `TypeableComponent`.
-    *   **Key Assertions**: Inherits `shouldHaveValue()`, `shouldHaveLength()` from `TypeableComponent`.
+    *   **Key Methods / Assertions**: Inherits all from `TypeableComponent` (e.g., `type()`, `clear()`, `shouldHaveValue()`).
     *   **Example**:
         ```javascript
         const TextArea = require('./cypress/support/components/base/TextArea');
@@ -306,48 +424,105 @@ Here's a breakdown of each base component:
         commentBox.shouldHaveValue('This is a test comment.');
         ```
 
-### Defining Page Instances and Registering Components
+-   **`Link`**:
+    *   **Purpose**: Extends `BasicComponent`. Represents anchor elements.
+    *   **Key Methods**: `visitURL()`, `removeTarget()` (removes the `target` attribute so links with `target="_blank"` open in the same tab, since Cypress cannot follow new tabs).
+    *   **Key Assertions**: `shouldHaveHref()`, `shouldNotHaveHref()`, `shouldBeExternalLink()`, `shouldBeInternalLink()`.
 
-To follow the PCOM pattern, define your page objects and register components for each page:
+-   **`Image`**:
+    *   **Purpose**: Extends `BasicComponent`. Represents `<img>` elements.
+    *   **Key Assertions**: `shouldHaveSource()`, `shouldHaveAlt()`, `shouldBeLoaded()` (asserts `naturalWidth > 0`, catching broken images).
 
-**Example: `page.js`**
+-   **`Label`**, **`List`**, **`ListItem`**, **`Modal`**:
+    *   **Purpose**: Semantic subclasses of `BasicComponent` for the corresponding HTML elements. They inherit all `BasicComponent` behavior and serve as extension points for custom components.
+
+### Group Mixin
+
+`Group` (`cypress/support/components/base/Group.js`) is a **mixin function**, not a class. Apply it to any component class to manage a collection of matching elements with group-level operations such as `filter()`, `not()`, `eq()`, `first()`, `last()`, `contains()`, `find()`, and `each()`:
+
 ```js
-const ToDoPage = require('./toDoPage');
+const Group = require('./cypress/support/components/base/Group');
+const ListItem = require('./cypress/support/components/base/ListItem');
 
-Cypress.pages = {
-  toDoPage: new ToDoPage()
-};
+class TodoItems extends Group(ListItem) {}
+
+const items = new TodoItems('todoItems', '.todo-list li');
+items.first().shouldContainText('Pay electric bill');
 ```
 
-**Example: `components.js`**
-```js
-const ToDoList = require('./cypress/support/components/cypress/ToDoList');
+## Base Page
 
-module.exports = {
-  todoList: new ToDoList('todoList', '.todoapp')
-  // Add more components as needed
-};
+Page Objects extend `BasicPage` (`cypress/support/pages/base/BasicPage.js`). The constructor takes a `path`, which may contain `:token` placeholders (e.g. `/users/:id`).
+
+**Navigation:**
+-   `open(options)` — visits the page's resolved `path` (relative to the configured `baseUrl`). `options.params` substitutes `:token` placeholders; all other options are forwarded to `cy.visit()` (e.g., `{ failOnStatusCode: false }`).
+-   `reload()`, `goBack()`, `goForward()`, `scrollToTop()`, `scrollToBottom()`.
+
+**Assertions:**
+-   `verifyPageIsOpened()` — asserts the current URL includes the page's path.
+-   `shouldHavePath(path)` — asserts the location pathname exactly equals the page's (or given) path.
+-   `shouldHaveTitle(title)` / `shouldContainTitle(text)` — document title assertions.
+-   `shouldHaveQueryParam(name, value)` — asserts a query parameter is present, optionally with a specific value.
+
+**Component management:**
+-   `addComponent(component)` — registers a component (and its nested components) on the page.
+-   `getComponent(uid)` / `hasComponent(uid)` — retrieve or check for a registered component.
+
+If a page's path differs per environment or locale, resolve it where the page instance is created (e.g., in `pages.js`, using `Cypress.env()` to pick the right path) and pass the result to the constructor.
+
+```js
+const BasicPage = require('../base/BasicPage');
+const Button = require('../../components/base/Button');
+
+class LoginPage extends BasicPage {
+    constructor(path) {
+        super(path);
+        this.loginButton = new Button('loginButton', '#login');
+        this.addComponent(this.loginButton);
+    }
+}
+
+module.exports = LoginPage;
 ```
 
-In your page class (e.g., `toDoPage.js`), you can import and register components from `components.js` for easy access in your tests.
-
-### Usage Examples
-
 ```js
-// Example: Using Input component
-const Input = require('./cypress/components/base/Input');
-const usernameInput = new Input('username', '#username');
-usernameInput.type('testuser').shouldHaveValue('testuser');
+// In a spec
+const page = Cypress.pages.userPage; // new UserPage('/users/:id')
+page.open({ params: { id: 42 } })    // visits /users/42
+    .shouldHavePath();
+```
 
-// Example: Using Button component
-const Button = require('./cypress/components/base/Button');
-const submitButton = new Button('submit', '#submit');
-submitButton.click();
+## Registering Pages and Components
 
-// Example: Using Select component
-const Select = require('./cypress/components/base/Select');
-const countrySelect = new Select('country', '#country');
-countrySelect.selectOption('US').shouldHaveOption('United States');
+The support file chain is `e2e.js` → `pages.js` → `components.js`. Register shared component instances in `components.js` and page instances in `pages.js`, attaching them to the global `Cypress` object so specs can access them anywhere:
+
+**`cypress/support/components.js`**
+```js
+const Button = require('./components/base/Button');
+
+Cypress.components = {};
+Cypress.components.loginButton = new Button('loginButton', '#login');
+```
+
+**`cypress/support/pages.js`**
+```js
+require('./components.js');
+
+const LoginPage = require('./pages/custom/LoginPage');
+
+Cypress.pages = {};
+Cypress.pages.loginPage = new LoginPage('/login');
+```
+
+**Usage in a spec:**
+```js
+describe('login', () => {
+    it('logs in successfully', { tags: '@smoke' }, () => {
+        const page = Cypress.pages.loginPage;
+        page.open().verifyPageIsOpened();
+        page.loginButton.shouldBeVisible().click();
+    });
+});
 ```
 
 ## Contributing

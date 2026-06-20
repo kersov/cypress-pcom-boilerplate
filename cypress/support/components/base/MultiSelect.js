@@ -22,7 +22,7 @@ class MultiSelect extends Select {
      * @returns {MultiSelect} This instance of MultiSelect for chaining calls.
      */
     deselectAll() {
-        this.get().invoke('val', []).trigger('change');
+        this.invoke('val', []).trigger('change');
         return this;
     }
 

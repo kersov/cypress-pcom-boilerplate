@@ -39,7 +39,7 @@ class TypeableComponent extends InteractiveComponent {
 
     /**
      * Asserts that the input is readonly.
-     * @returns {Input} This instance for chaining.
+     * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
     shouldBeReadonly() {
         this.shouldHaveAttribute('readonly');
@@ -48,7 +48,7 @@ class TypeableComponent extends InteractiveComponent {
 
     /**
      * Asserts that the input is required.
-     * @returns {Input} This instance for chaining.
+     * @returns {TypeableComponent} This instance of TypeableComponent for chaining calls.
      */
     shouldBeRequired() {
         this.shouldHaveAttribute('required');

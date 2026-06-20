@@ -6,13 +6,13 @@ const InteractiveComponent = require('./InteractiveComponent');
  */
 class Form extends InteractiveComponent {
     /**
-     * Submits the form by triggering the submit event using Cypress .trigger().
+     * Submits the form using Cypress .submit().
      *
-     * @param {Object} [options] - Options object for Cypress .trigger(), e.g., { force: true }.
+     * @param {Object} [options] - Options object for Cypress .submit(), e.g., { timeout: 10000 }.
      * @returns {Form} This instance of Form for chaining calls.
      */
     submit(options) {
-        this.get().trigger('submit', options);
+        this.get().submit(options);
         return this;
     }
 }

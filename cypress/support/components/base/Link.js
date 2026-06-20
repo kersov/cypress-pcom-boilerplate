@@ -20,11 +20,13 @@ class Link extends BasicComponent {
     }
 
     /**
-     * Opens the link in a new tab by setting target='_blank'.
+     * Removes the target attribute so the link opens in the same tab when clicked.
+     * Cypress cannot follow links opened in new tabs; use this before clicking
+     * links with target='_blank'.
      * @returns {Link} This instance of Link for chaining calls.
      */
-    openInNewTab() {
-        this.invoke('attr', 'target', '_blank');
+    removeTarget() {
+        this.invoke('removeAttr', 'target');
         return this;
     }
 
@@ -55,21 +57,16 @@ class Link extends BasicComponent {
      * @returns {Link} This instance of Link for chaining calls.
      */
     shouldBeExternalLink() {
-        this.invoke('attr', 'href').then(href => {
-            cy.wrap(href).should('match', /^(http|https):\/\//);
-        });
+        this.get().invoke('attr', 'href').should('match', /^(http|https):\/\//);
         return this;
     }
 
     /**
-     * Asserts that the link is internal (based on relative path or starting with /).
+     * Asserts that the link is internal (href does not start with http:// or https://).
      * @returns {Link} This instance of Link for chaining calls.
      */
     shouldBeInternalLink() {
-        this.invoke('attr', 'href').then(href => {
-            cy.wrap(href).should('not.match', /^(http|https):\/\//);
-            cy.wrap(href).should('not.contain', '#');
-        });
+        this.get().invoke('attr', 'href').should('not.match', /^(http|https):\/\//);
         return this;
     }
 }

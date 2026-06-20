@@ -10,6 +10,8 @@ class InteractiveComponent extends BasicComponent {
 
     /**
      * Enables the interactive component by removing the 'disabled' attribute using Cypress .invoke().
+     * Warning: this mutates the application under test rather than simulating user behavior;
+     * interactions after enable() may not reflect what a real user can do.
      *
      * @returns {InteractiveComponent} This instance of InteractiveComponent for chaining calls.
      */
@@ -20,6 +22,7 @@ class InteractiveComponent extends BasicComponent {
 
     /**
      * Disables the interactive component by setting the 'disabled' attribute using Cypress .invoke().
+     * Warning: this mutates the application under test rather than simulating user behavior.
      *
      * @returns {InteractiveComponent} This instance of InteractiveComponent for chaining calls.
      */

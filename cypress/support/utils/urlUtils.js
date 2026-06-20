@@ -1,32 +1,31 @@
 const { getEnvVariable } = require('./envUtils');
 
 /**
- * Generates the base URL for testing based on environment variables and configurations.
- * 
- * The function constructs the URL by checking various environment variable combinations
- * in a specific order of precedence. For sandbox environments, it directly retrieves
- * the URL from the environment variables without credentials handling.
+ * Resolves the base URL for the current site/env/locale from environment variables.
+ *
+ * URLs are defined exclusively via environment variables (cypress.env.json,
+ * CYPRESS_* system variables, or --env CLI args) using the hierarchical lookup:
+ * `env.site.locale.url` → `env.site.url` → `env.url` → `url`.
+ * Credentials for basic auth, if needed, belong in the URL itself
+ * (e.g. "https://user:password@host").
  *
  * @param {Object} config - Cypress configuration object
- * @returns {string} The generated base URL for testing
+ * @returns {string} The base URL for testing
+ * @throws {Error} When no URL is configured for the given site/env/locale.
  */
 function getBaseURL(config) {
     const site = config.env.site;
     const env = config.env.env;
     const locale = config.env.locale;
-    if (env === 'sandbox') {
-        return getEnvVariable({config, variable: 'url', env, site, locale});
+    const url = getEnvVariable({config, variable: 'url', env, site, locale});
+    if (!url) {
+        throw new Error(
+            `No base URL configured for site="${site}", env="${env}", locale="${locale}". ` +
+            `Define a "url" environment variable, e.g. "${env}.${site}.url" in cypress.env.json, ` +
+            'a CYPRESS_ system variable, or --env url=...'
+        );
     }
-    const username = getEnvVariable({config, variable: 'username', env, site, locale});
-    const password = getEnvVariable({config, variable: 'password', env, site, locale});
-    const urlMask = {
-      main: {
-        dev: `https://${username}:${password}@example.cypress.io`,
-        stg: `https://${username}:${password}@example.cypress.io`,
-        prod: `https://example.cypress.io`
-      }
-    };
-    return urlMask[site][env];
+    return url;
 }
 
 module.exports = { getBaseURL };

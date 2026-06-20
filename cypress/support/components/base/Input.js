@@ -91,12 +91,18 @@ class Input extends TypeableComponent {
      * Creates a Label component and adds it as an attribute to this Input.
      * If uid or options are not provided, defaults are used:
      *   - uid: this.uid + '-label'
-     *   - selector: 'label[for="' + this.id + '"]' (if this.id exists)
+     *   - selector: 'label[for="' + this.id + '"]' (requires this.id; throws otherwise)
      * @param {string} [uid] - The unique identifier for the Label component.
      * @param {string|function|object} [options] - Selector string, callback function, or options object for the Label component (can include selector, text, callback).
      * @returns {Label} The created Label component.
      */
-    addLabel(uid = `${this.uid}-label`, options = `label[for="${this.id}"]`) {
+    addLabel(uid = `${this.uid}-label`, options) {
+        if (typeof options === 'undefined') {
+            if (!this.id) {
+                throw new Error('addLabel() requires options when the input has no id selector.');
+            }
+            options = `label[for="${this.id}"]`;
+        }
         this.label = new Label(uid, options);
         return this.label;
     }
